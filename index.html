@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>Kinisi K1</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/109/three.min.js"></script>
+
+  <script src="./libs/GLTFLoader.js"></script>
+  <script src="./libs/uart.js"></script>
+  <script src="./libs/bitwrench.min.js"></script>
+  <script src="./libs/gaugejs.min.js"></script>
+  <script src="./libs/sensordata.js"></script>
+  <script src="./libs/knee-image-functions.js"></script>
+  <script src="./libs/chartjs-4.3.0-umd.js"></script>
+  <script src="./libs/chartjs-helpers.js"></script>
+
+  <script> bw.DOMInsertElement("head", bw.htmlFavicon("@", "black"))</script>
+  </script>
+  <style>
+    * {
+      font-family: Arial, Helvetica, sans-serif
+    }
+
+    html {
+      margin 0;
+      padding: 0;
+      height: 100%;
+      width: 100%;
+      overflow: hidden;
+    }
+
+    body {
+      margin 0;
+      padding: 0;
+      height: 100%;
+      width: 100%;
+      color: black;
+      background-color: #111;
+      overflow: hidden
+    }
+
+    .chart-label {
+      color: white;
+      font-weight: 500;
+      font-size: 1.5rem;
+      padding-left: 0.55rem;
+    }
+
+    .c3-axis-y text {
+      fill: #222;
+      font-size: 12px;
+    }
+
+    .c3-axis-x text {
+      font-size: 12px;
+      fill: #222;
+    }
+
+    .c3-legend-item {
+      fill: #111;
+    }
+
+    /*
+[class^=c3] {
+   fill: #222;
+}
+*/
+    .c3-chart-arc text {
+      fill: #222;
+    }
+
+
+    body {
+
+      border: none !important;
+    }
+
+    .widget {
+      background: #eee;
+      /* border: 4px solid #0b22a3;*/
+      border-radius: 9px !important;
+
+      color: #111;
+      height: 98%;
+    }
+
+    .woo {
+      height: 100%;
+      margin: 0 auto;
+      width: 100%;
+      border-radius: 9px !important;
+      border: none;
+    }
+
+    .status {
+      /*background-image: url("./assets/kinisi-logo-white.png");*/
+      background-size: contain;
+      background-position: 98% 50%;
+      background-repeat: no-repeat;
+      width: 100%;
+      height: 93%;
+      color: white;
+    }
+
+    .label {
+      height: 15px;
+      display: inline;
+      font-size: 15px;
+    }
+
+
+    .statusRow {
+      width: 100%;
+      height: 10vh;
+      padding-top: 1%;
+    }
+
+    .defHeight {
+      height: 24vh;
+    }
+
+    .fullPanel {
+      height: 100%;
+      width: 100%;
+      margin: 0 auto;
+    }
+
+    .wheight {
+      height: 100%;
+      padding: 4px;
+    }
+
+    .title {
+      /*   background-color: #111; */
+
+    }
+
+    .sepHeight {
+      height: 1vh;
+    }
+
+    .kinisi-logo {
+      padding-left: 1rem;
+    }
+
+    .tagline {
+      vertical-align: middle;
+      padding-bottom: 5rem;
+      font-size: 1.5rem;
+    }
+
+    .flipHorizontal {
+      -webkit-transform: scaleX(-1);
+      transform: scaleX(-1);
+    }
+
+    img {
+      border-radius: 4px !important;
+      padding: 4px;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="panel" class="fullPanel bw-container">
+    <div class="bw-row statusRow ">
+      <div class="status  title">
+        <div>
+          <img class="kinisi-color kinisi-logo" src="./assets/Kinisi-Logo.svg" width="180"></img>
+          <!-- <br><span style='font-size:20pt' onclick='bw.openFullScreen()'>&nbsp;&nbsp;Kinisi - K1 Pro Motion Sensor Data</span> -->
+          <!-- <button id="bigButton"></button> -->
+          <!-- <div class="label" id="bluetooth">Click button to connect to the K1-proto</div> --> <!-- now autoloads-->
+        </div>
+        <!-- <span class="tagline kinisi-logo">K1 Motion Analytics</span> -->
+      </div>
+
+      <!-- first row -->
+      <div class="bw-row defHeight">
+        <div class="bw-col-3 wheight">
+          <h2 class="chart-label">Thigh Accel</h2>
+          <canvas class="woo widget" id="a0"></canvas>
+        </div>
+
+        <div class="bw-col-3 wheight">
+          <h2 class="chart-label">Thigh Gyro</h2>
+          <canvas class="woo widget" id="g0"> </canvas>
+        </div>
+
+        <div class="bw-col-3 wheight">
+          <h2 class="chart-label">Thigh Mag</h2>
+          <canvas class="woo widget" id="m0"></canvas>
+        </div>
+
+        <div class="bw-col-3 wheight">
+          <h2 class="chart-label">Bones</h2>
+          <div class="woo widget"><img id="bonesFront" style="width:100%;height:100%"></img></div>
+        </div>
+
+      </div>
+
+      <div class="bw-row bw-col-12 sepHeight"></div>
+
+
+
+      <!-- second row -->
+      <div class="bw-row bw-col-12 defHeight">
+        <div class="bw-col-3 wheight">
+          <h2 class="chart-label">Calf Accel</h2>
+          <canvas class="woo widget" id="a1"></canvas>
+        </div>
+
+        <div class="bw-col-3 wheight">
+          <h2 class="chart-label">Calf Gyro</h2>
+          <canvas class="woo widget" id="g1"></canvas>
+        </div>
+
+        <div class="bw-col-3 wheight">
+          <h2 class="chart-label">Calf Mag</h2>
+          <canvas class="woo widget" id="m1"></canvas>
+        </div>
+
+        <div class="bw-col-3 wheight">
+          <h2 class="chart-label">Bones Lateral</h2>
+          <div class="woo widget"><img id="bonesLateral" style="width:100%;height:100%"></img></div>
+        </div>
+      </div>
+
+      <div class="bw-row bw-col-12 sepHeight"></div>
+
+      <!-- 3rd row -->
+      <div class="bw-row bw-col-12 defHeight">
+        <div class="bw-col-3 wheight">
+          <h2 class="chart-label">Sound</h2>
+          <canvas class="woo widget" id="sn"></canvas>
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+  <script type="text/javascript">
+
+    var _d = 20;
+
+    const maxlen = 100;
+
+    let a0 = newChartJSLineChart("#a0", 3, "Thigh Accel", maxlen, [-15, 15]);
+    let g0 = newChartJSLineChart("#g0", 3, "Thigh Gyro", maxlen, [-400, 400]);
+    let m0 = newChartJSLineChart("#m0", 3, "Thigh Mags", maxlen, [-100, 100]);
+
+    let a1 = newChartJSLineChart("#a1", 3, "Calf Accel", maxlen, [-15, 15]);
+    let g1 = newChartJSLineChart("#g1", 3, "Calf Gyro", maxlen, [-400, 400]);
+    let m1 = newChartJSLineChart("#m1", 3, "Calf Mags", maxlen, [-100, 100]);
+
+
+    let sn = newChartJSLineChart("#sn", 1, "Sound Energy", maxlen, [0, 900]);
+
+
+    //Flexion Angle
+    setTimeout(() => {
+      renderKneeBonesAngle("#bonesFront", 0, "front", "right")
+      renderKneeBonesAngle("#bonesLateral", 0, "lateral", "right")
+    }, 200);
+
+    //update renderings
+    setInterval(function () {
+
+      var gd = gDataStable;
+      if ("a0" in gDataStable)
+        a0.updateChart(gDataStable["a0"], true);
+
+      if ("g0" in gDataStable)
+        g0.updateChart(vectorScale(gDataStable["g0"],57), true);
+
+      if ("m0" in gDataStable) {
+        m0.updateChart(gDataStable["m0"], true);
+       
+      }
+
+      if ("a1" in gDataStable)
+        a1.updateChart(gDataStable["a1"], true);
+
+      if ("g1" in gDataStable)
+        g1.updateChart(vectorScale(gDataStable["g1"],57), true);
+
+      if ("m1" in gDataStable) {
+        m1.updateChart(gDataStable["m1"], true);
+       // renderKneeBonesAngle("#ThighM", 0, "lateral", "right");
+      }
+
+      if ("sn" in gDataStable) {
+        sn.updateChart([gDataStable["sn"]], true);
+      }
+      if ("a0" in gDataStable && "a1" in gDataStable) {
+      let flexAngle = vectorAngle(gDataStable.a0,gDataStable.a1,true); {
+          //flexion angle
+          renderKneeBonesAngle("#bonesFront"  ,flexAngle,"front","right")
+          renderKneeBonesAngle("#bonesLateral",flexAngle,"lateral","right")
+
+        }
+      }
+      /*
+      if ("a1" in gd && "a0" in gd && "g0" in gd && "g1" in gd) {
+        let e = gd["g0"].reduce((r,x)=>r+Math.abs(x),0)+gd["g1"].reduce((r,x)=>r+Math.abs(x),0) ; // need to substract off relative energy / long term avg
+        energyGauge.load({ columns: [['data', bw.fixNum(e,2)]]});
+
+      
+        var fulle = gd["a0"].reduce((r,x)=>r+Math.abs(x),0) + gd["a1"].reduce((r,x)=>r+Math.abs(x),0);
+        newPlotlyBarChart("c2",[["Thigh",gd["a0"].reduce((r,x)=>r+Math.abs(x),0),"#0bc"],["Calf",gd["a1"].reduce((r,x)=>r+Math.abs(x),0),"def"],["Full",fulle,"eee"  ]],{"title":"Power"});
+        var fullt = gd["g0"].reduce((r,x)=>r+Math.abs(x),0) + gd["g1"].reduce((r,x)=>r+Math.abs(x),0);
+        newPlotlyBarChart("c3",[["Thigh",gd["g0"].reduce((r,x)=>r+Math.abs(x),0),"#bbc"],["Calf",gd["g1"].reduce((r,x)=>r+Math.abs(x),0),"0ef" ],["Full",fullt,"8ee" ]],{"title":"Torque"});
+ 
+      }
+      if ("tmp" in gDataStable && "bar" in gDataStable && "hum" in gDataStable && "alt" in gDataStable) {
+        
+        newPlotlyBarChart("c0", [
+          ["Temp",gd["tmp"],"#931"],
+          ["Bari",gd["bar"]/10,"def"],
+          ["Alti",gd["alt"]+100,"eee"],
+          ["Humi",gd["hum"],"#802"]
+        ],{title: "Environment"});
+        
+      }
+      */
+    }, 67);
+
+
+    setInterval(function () {
+      try {
+        if (gBLE.connected)
+          gBLE.write(JSON.stringify({ "env": "true" }));
+      }
+      catch (e) { }
+    }, 10000); // every 10 seconds update the environment (pressure, altitude, etc)
+
+    //
+
+
+    // 3d model
+    var renderer = new THREE.WebGLRenderer();
+    var scene = new THREE.Scene();
+    var camera = new THREE.PerspectiveCamera(75, 1, 1, 10000);
+
+    function init3D() {
+      console.log("init3D called...")
+      var container = document.getElementById('a0');
+      var loader = new THREE.GLTFLoader();
+      scene.background = new THREE.Color(0x111111);
+
+      renderer.setSize(container.offsetWidth, container.offsetHeight);
+      renderer.setPixelRatio(4);
+      container.appendChild(renderer.domElement);
+      var model = bw.getURLParam("model") == "nano" ? "./assets/nano33ble.glb" : "./assets/RiggedFigure.glb";
+
+      loader.load(model, // ./assets/RiggedFigure.glb ./
+        // called when the Arduinio model is loaded
+        function (gltf) {
+
+          // Model
+          arduinoModel = gltf.scene;
+          scene.add(arduinoModel);
+
+          // LED
+          var geometry = new THREE.BoxGeometry(1, 1, 1);
+          ledMaterial = new THREE.MeshBasicMaterial({ color: 0x111111 });
+          ledObject = new THREE.Mesh(geometry, ledMaterial);
+          ledObject.position.set(-4.5, 4, 0);
+          arduinoModel.add(ledObject);
+          ledLight = new THREE.PointLight(0x111111, 3, 100);
+          ledLight.position.set(-4.5, 4, -1);
+
+          arduinoModel.add(ledLight);
+          var sphereSize = 1;
+
+          // Light
+          const color = 0xFFFFFF;
+          const intensity = 1;
+          const light = new THREE.DirectionalLight(color, intensity);
+          light.position.set(-20, 100, 0);
+          light.target.position.set(0, 0, 0);
+
+          scene.add(light);
+          scene.add(light.target);
+          var hemiLight = new THREE.HemisphereLight(0xffffff, 0xffffff, 1000);
+          scene.add(hemiLight);
+
+          // Camera
+          camera.position.set(-2, 1, -1.5);
+          camera.rotation.z = Math.PI; // 180
+          camera.lookAt(new THREE.Vector3(1, 0, 1));
+          renderer.render(scene, camera);
+        }
+      );
+    }
+    //init3D();
+    function update3d(a0) {
+      var c = 0.0174533;
+      var Ax = a0[0] * c;// BLEsense['accelerometer'].data.Ax.latest() * 0.0174533;
+      var Ay = a0[1] * c;// BLEsense['accelerometer'].data.Ay.latest() * 0.0174533;
+      var Az = a0[2] * c;//BLEsense['accelerometer'].data.Az.latest() * 0.0174533;
+      var pitch = Math.atan2((-Ax), Math.sqrt(Ay * Ay + Az * Az));
+      var roll = Math.atan2(Ay, Az);
+      arduinoModel.rotation.x = roll;
+      arduinoModel.rotation.y = pitch;
+      arduinoModel.rotation.z = 0;
+      renderer.render(scene, camera);
+    }
+
+  </script>
+  <script src="./libs/k1-btdata.js"></script>
+</body>
+
+</html>

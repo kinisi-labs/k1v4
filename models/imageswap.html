@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script src="../libs/bitwrench.min.js"></script>
+<style>
+img {
+	border-radius: 0.75rem;
+}
+
+.slider {
+padding: 2rem;
+}
+.mirror {
+  -webkit-transform: scaleX(-1);
+  transform: scaleX(-1);
+}
+button {
+	border-radius: 0.5rem;
+	padding : 1rem;
+	border : none;
+	background-color : lightblue;
+	color : white;
+	font-size: 2rem;
+}
+button : hover {
+	background-color: grey;
+}
+</style>
+</head>
+<body class="bw-def-page-setup bw-font-sans-serif">
+<h1>Kinisi Bone Animation Test </h1><body>
+
+
+<img src = "./SkeletonOutput/lateral_rend_0000-0000-0000.png" id = "lateral_left" height = "256" width = "256" />
+<img class = "mirror" src = "./SkeletonOutput/lateral_rend_0000-0000-0000.png" id = "lateral_right" height = "256" width = "256" />
+<img src = "./SkeletonOutput/front_rend_0000-0000-0000.png" id = "front_left" height = "256" width = "256" />
+<img class = "mirror" src = "./SkeletonOutput/front_rend_0000-0000-0000.png" id = "front_right" height = "256" width = "256" />
+<br>
+<br>
+<button id="pause" onclick="pauseSteps()">Pause Animation</button>
+<div>
+  <input class="slider" type="range" id="imageIndex" name="cowbell"  min="0" max="39" value="0" step="1" >
+  <label for="cowbell">Range</label> <span id="selection"></span>
+</div>
+<br>
+<div id="files"></div>
+<script>
+let renderData;
+var i=0,j=0,pause=false;
+async function getKneeImages() {
+    const response = await fetch("./SkeletonOutput/rendFileNames.json");
+    const json = await response.json();
+    renderData = json;
+    bw.DOM("#files",bw.htmlJSON(renderData));
+    setInterval(()=> {
+    		if (!pause) {
+    			renderKneeBones(j);
+    		}
+	    	i = (i+1) % (2*renderData.lateralFiles.length -1);
+	    	j = (i< renderData.lateralFiles.length) ? i : (2*renderData.lateralFiles.length) - i -1;
+	    	
+	    }, 100);
+}
+
+getKneeImages();
+
+function renderKneeBones(j) {
+	const path= "./SkeletonOutput/"
+	bw.DOM("#lateral_left")[0].src  = "./"+renderData.lateralFiles[j % renderData.lateralFiles.length]; 
+	bw.DOM("#lateral_right")[0].src = "./"+renderData.lateralFiles[j % renderData.lateralFiles.length]; 
+	bw.DOM("#front_left")[0].src    = "./"+renderData.frontFiles  [j % renderData.frontFiles.length]; 
+	bw.DOM("#front_right")[0].src   = "./"+renderData.frontFiles  [j % renderData.frontFiles.length]; 	
+}
+function pauseSteps(){ pause = !pause; bw.DOM("#pause")[0].style["background-color"] = pause ? "grey" : "lightblue"  }
+const value = document.querySelector("#imageIndex");
+value.addEventListener("input",(e)=>{bw.DOM("#selection",e.target.value), renderKneeBones(e.target.value)})
+
+
+</script>	
+</body>
