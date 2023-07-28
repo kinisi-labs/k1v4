@@ -47,48 +47,16 @@
       display:none;
     }
 
-    .c3-axis-y text {
-      fill: #222;
-      font-size: 12px;
-    }
-
-    .c3-axis-x text {
-      font-size: 12px;
-      fill: #222;
-    }
-
-    .c3-legend-item {
-      fill: #111;
-    }
-
-    /*
-[class^=c3] {
-   fill: #222;
-}
-*/
-    .c3-chart-arc text {
-      fill: #222;
-    }
-
-
-  
 
     .widget {
       background: #111;
-      /* border: 4px solid #0b22a3;*/
+      border: 1px solid #888;
       border-radius: 9px !important;
-
-    /*  color: #111; */
+      color: #aaa;
       height: 98%;
     }
 
-    .woo {
-      height: 100%;
-      margin: 0 auto;
-      width: 100%;
-      border-radius: 9px !important;
-      border: 1px #aaa  solid;
-    }
+  
 
     .status {
       /*background-image: url("./assets/kinisi-logo-white.png");*/
@@ -113,6 +81,11 @@
       padding-top: 1%;
     }
 
+    .statusInner {
+      padding-top: 10%;
+      padding-bottom: 10%;
+    }
+
     .defHeight {
       height: 24vh;
     }
@@ -128,10 +101,6 @@
       padding: 4px;
     }
 
-    .title {
-      /*   background-color: #111; */
-
-    }
 
     .sepHeight {
       height: 1vh;
@@ -154,7 +123,6 @@
 
     img {
       border-radius: 4px !important;
-      padding: 4px;
     }
   </style>
 </head>
@@ -162,8 +130,8 @@
 <body>
   <div id="panel" class="fullPanel bw-container">
     <div class="bw-row statusRow ">
-      <div class="status  title">
-        <div>
+      <div class="status">
+        <div class="status-inner">
           <img class="kinisi-color kinisi-logo" src="./assets/Kinisi-Logo.svg" width="180"></img>
           <!-- <br><span style='font-size:20pt' onclick='bw.openFullScreen()'>&nbsp;&nbsp;Kinisi - K1 Pro Motion Sensor Data</span> -->
           <!-- <button id="bigButton"></button> -->
@@ -176,22 +144,22 @@
       <div class="bw-row defHeight">
         <div class="bw-col-3 wheight">
           <h2 class="chart-label">Thigh Accel</h2>
-          <canvas class="woo widget" id="a0"></canvas>
+          <canvas class="widget" id="a0"></canvas>
         </div>
 
         <div class="bw-col-3 wheight">
           <h2 class="chart-label">Thigh Gyro</h2>
-          <canvas class="woo widget" id="g0"> </canvas>
+          <canvas class="widget" id="g0"> </canvas>
         </div>
 
         <div class="bw-col-3 wheight">
           <h2 class="chart-label">Thigh Mag</h2>
-          <canvas class="woo widget" id="m0"></canvas>
+          <canvas class="widget" id="m0"></canvas>
         </div>
 
         <div class="bw-col-3 wheight">
           <h2 class="chart-label">Bones</h2>
-          <div class="woo widget"><img id="bonesFront" style="width:100%;height:100%"></img></div>
+          <div class="widget"><img id="bonesFront" style="width:100%;height:100%"></img></div>
         </div>
 
       </div>
@@ -204,22 +172,22 @@
       <div class="bw-row bw-col-12 defHeight">
         <div class="bw-col-3 wheight">
           <h2 class="chart-label">Calf Accel</h2>
-          <canvas class="woo widget" id="a1"></canvas>
+          <canvas class="widget" id="a1"></canvas>
         </div>
 
         <div class="bw-col-3 wheight">
           <h2 class="chart-label">Calf Gyro</h2>
-          <canvas class="woo widget" id="g1"></canvas>
+          <canvas class="widget" id="g1"></canvas>
         </div>
 
         <div class="bw-col-3 wheight">
           <h2 class="chart-label">Calf Mag</h2>
-          <canvas class="woo widget" id="m1"></canvas>
+          <canvas class="widget" id="m1"></canvas>
         </div>
 
         <div class="bw-col-3 wheight">
           <h2 class="chart-label">Bones Lateral</h2>
-          <div class="woo widget"><img id="bonesLateral" style="width:100%;height:100%"></img></div>
+          <div class="widget"><img id="bonesLateral" style="width:100%;height:100%"></img></div>
         </div>
       </div>
 
@@ -229,7 +197,7 @@
       <div class="bw-row bw-col-12 defHeight">
         <div class="bw-col-3 wheight">
           <h2 class="chart-label">Sound</h2>
-          <canvas class="woo widget" id="sn"></canvas>
+          <canvas class="widget" id="sn"></canvas>
         </div>
 
       </div>
