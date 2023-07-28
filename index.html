@@ -34,29 +34,18 @@
       padding: 0;
       height: 100%;
       width: 100%;
-      color: black;
       background-color: rgb(6, 21, 58);
       overflow: hidden
     }
-
-    .chart-label {
-      color: white;
-      font-weight: 500;
-      font-size: 1.5rem;
-      padding-left: 0.55rem;
-      display:none;
-    }
-
 
     .widget {
       background: #111;
       border: 1px solid #888;
       border-radius: 9px !important;
-      color: #aaa;
+      color: #fff;
       height: 98%;
     }
 
-  
 
     .status {
       /*background-image: url("./assets/kinisi-logo-white.png");*/
@@ -67,13 +56,6 @@
       height: 93%;
       color: white;
     }
-
-    .label {
-      height: 15px;
-      display: inline;
-      font-size: 15px;
-    }
-
 
     .statusRow {
       width: 100%;
@@ -87,13 +69,7 @@
     }
 
     .defHeight {
-      height: 24vh;
-    }
-
-    .fullPanel {
-      height: 100%;
-      width: 100%;
-      margin: 0 auto;
+      height: 26vh;
     }
 
     .wheight {
@@ -108,6 +84,7 @@
 
     .kinisi-logo {
       padding-left: 1rem;
+      height: 5vh;
     }
 
     .tagline {
@@ -121,6 +98,11 @@
       transform: scaleX(-1);
     }
 
+    .infobar {
+      padding-left: 1vw;
+      padding-bottom: 1%;
+      color: #aaa;
+    }
     img {
       border-radius: 4px !important;
     }
@@ -139,70 +121,62 @@
         </div>
         <!-- <span class="tagline kinisi-logo">K1 Motion Analytics</span> -->
       </div>
-
-      <!-- first row -->
-      <div class="bw-row defHeight">
-        <div class="bw-col-3 wheight">
-          <h2 class="chart-label">Thigh Accel</h2>
-          <canvas class="widget" id="a0"></canvas>
-        </div>
-
-        <div class="bw-col-3 wheight">
-          <h2 class="chart-label">Thigh Gyro</h2>
-          <canvas class="widget" id="g0"> </canvas>
-        </div>
-
-        <div class="bw-col-3 wheight">
-          <h2 class="chart-label">Thigh Mag</h2>
-          <canvas class="widget" id="m0"></canvas>
-        </div>
-
-        <div class="bw-col-3 wheight">
-          <h2 class="chart-label">Bones</h2>
-          <div class="widget"><img id="bonesFront" style="width:100%;height:100%"></img></div>
-        </div>
-
+    </div>
+    <div class="bw-row ">
+        <div id="info" class="bw-col-12 infobar">Test info bar</div>
+    </div>
+    <!-- first row -->
+    <div class="bw-row defHeight">
+      <div class="bw-col-3 wheight">
+        <canvas class="widget" id="a0"></canvas>
       </div>
 
-      <div class="bw-row bw-col-12 sepHeight"></div>
-
-
-
-      <!-- second row -->
-      <div class="bw-row bw-col-12 defHeight">
-        <div class="bw-col-3 wheight">
-          <h2 class="chart-label">Calf Accel</h2>
-          <canvas class="widget" id="a1"></canvas>
-        </div>
-
-        <div class="bw-col-3 wheight">
-          <h2 class="chart-label">Calf Gyro</h2>
-          <canvas class="widget" id="g1"></canvas>
-        </div>
-
-        <div class="bw-col-3 wheight">
-          <h2 class="chart-label">Calf Mag</h2>
-          <canvas class="widget" id="m1"></canvas>
-        </div>
-
-        <div class="bw-col-3 wheight">
-          <h2 class="chart-label">Bones Lateral</h2>
-          <div class="widget"><img id="bonesLateral" style="width:100%;height:100%"></img></div>
-        </div>
+      <div class="bw-col-3 wheight">
+        <canvas class="widget" id="g0"> </canvas>
       </div>
 
-      <div class="bw-row bw-col-12 sepHeight"></div>
+      <div class="bw-col-3 wheight">
+        <canvas class="widget" id="m0"></canvas>
+      </div>
 
-      <!-- 3rd row -->
-      <div class="bw-row bw-col-12 defHeight">
-        <div class="bw-col-3 wheight">
-          <h2 class="chart-label">Sound</h2>
-          <canvas class="widget" id="sn"></canvas>
-        </div>
-
+      <div class="bw-col-3 wheight">
+        <div class="widget"><img id="bonesFront" style="width:100%;height:100%"></img></div>
       </div>
 
     </div>
+
+    <div class="bw-row bw-col-12 sepHeight"></div>
+
+    <!-- second row -->
+    <div class="bw-row bw-col-12 defHeight">
+      <div class="bw-col-3 wheight">
+        <canvas class="widget" id="a1"></canvas>
+      </div>
+
+      <div class="bw-col-3 wheight">
+        <canvas class="widget" id="g1"></canvas>
+      </div>
+
+      <div class="bw-col-3 wheight">
+        <canvas class="widget" id="m1"></canvas>
+      </div>
+
+      <div class="bw-col-3 wheight">
+        <div class="widget"><img id="bonesLateral" style="width:100%;height:100%"></img></div>
+      </div>
+    </div>
+
+    <div class="bw-row bw-col-12 sepHeight"></div>
+
+    <!-- 3rd row -->
+    <div class="bw-row bw-col-12 defHeight">
+      <div class="bw-col-3 wheight">
+        <canvas class="widget" id="sn"></canvas>
+      </div>
+
+    </div>
+
+  </div>
   </div>
   <script type="text/javascript">
 
@@ -236,32 +210,32 @@
         a0.updateChart(gDataStable["a0"], true);
 
       if ("g0" in gDataStable)
-        g0.updateChart(vectorScale(gDataStable["g0"],57), true);
+        g0.updateChart(vectorScale(gDataStable["g0"], 57), true);
 
       if ("m0" in gDataStable) {
         m0.updateChart(gDataStable["m0"], true);
-       
+
       }
 
       if ("a1" in gDataStable)
         a1.updateChart(gDataStable["a1"], true);
 
       if ("g1" in gDataStable)
-        g1.updateChart(vectorScale(gDataStable["g1"],57), true);
+        g1.updateChart(vectorScale(gDataStable["g1"], 57), true);
 
       if ("m1" in gDataStable) {
         m1.updateChart(gDataStable["m1"], true);
-       // renderKneeBonesAngle("#ThighM", 0, "lateral", "right");
+        // renderKneeBonesAngle("#ThighM", 0, "lateral", "right");
       }
 
       if ("sn" in gDataStable) {
         sn.updateChart([gDataStable["sn"]], true);
       }
       if ("a0" in gDataStable && "a1" in gDataStable) {
-      let flexAngle = vectorAngle(gDataStable.a0,gDataStable.a1,true); {
+        let flexAngle = vectorAngle(gDataStable.a0, gDataStable.a1, true); {
           //flexion angle
-          renderKneeBonesAngle("#bonesFront"  ,flexAngle,"front","right")
-          renderKneeBonesAngle("#bonesLateral",flexAngle,"lateral","right")
+          renderKneeBonesAngle("#bonesFront", flexAngle, "front", "right")
+          renderKneeBonesAngle("#bonesLateral", flexAngle, "lateral", "right")
 
         }
       }
@@ -290,15 +264,15 @@
       */
     }, 67);
 
-/*
-    setInterval(function () {
-      try {
-        if (gBLE.connected)
-          gBLE.write(JSON.stringify({ "env": "true" }));
-      }
-      catch (e) { }
-    }, 10000); // every 10 seconds update the environment (pressure, altitude, etc)
-*/
+    /*
+        setInterval(function () {
+          try {
+            if (gBLE.connected)
+              gBLE.write(JSON.stringify({ "env": "true" }));
+          }
+          catch (e) { }
+        }, 10000); // every 10 seconds update the environment (pressure, altitude, etc)
+    */
     //
 
 

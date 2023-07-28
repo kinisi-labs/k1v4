@@ -28,6 +28,10 @@ const  gchartJSDefaultOptions = {
             },
         },
         plugins: {
+            title: {
+                display: false,
+                color: "#aaa"
+            },  
             legend: {
                 display: false
             },
@@ -81,6 +85,10 @@ let newChartJSLineChart = function (domEl, dims, title, maxXLen, yrange = null, 
         labels: Array.from({ length: maxXLen }, (_, i) => i),
         datasets: JSON.parse(JSON.stringify(xdatasets)),
 
+    }
+    if (title != "" || title != null) {
+        chartOpts.options.plugins.title.text = title;
+        chartOpts.options.plugins.title.display = true;
     }
 
     if (bw.typeOf(yrange) == "array") {
