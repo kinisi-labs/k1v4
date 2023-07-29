@@ -173,6 +173,12 @@
       <div class="bw-col-3 wheight">
         <canvas class="widget" id="sn"></canvas>
       </div>
+      <div class="bw-col-3 wheight">
+        <canvas class="widget" id="flexion"></canvas>
+      </div>
+      <div class="bw-col-3 wheight">
+        <canvas class="widget" id="tilt_rot"></canvas>
+      </div>
 
     </div>
 
@@ -194,6 +200,9 @@
 
 
     let sn = newChartJSLineChart("#sn", 1, "Sound Energy", maxlen, [0, 80]);
+    let flexion  = newChartJSLineChart("#flexion", 1, "Flexion Angle", maxlen, [-30, 150]);
+
+    let tilt_rot  = newChartJSLineChart("#tilt_rot", 2, "Tilt And Rotation", maxlen, [-50, 50]);
 
 
     //Flexion Angle
@@ -229,14 +238,15 @@
       }
 
       if ("sn" in gDataStable) {
-        sn.updateChart([10*Math.log10 (gDataStable["sn"])], true);
+        sn.updateChart([gDataStable["sn"]], true);
       }
       if ("a0" in gDataStable && "a1" in gDataStable) {
         let flexAngle = vectorAngle(gDataStable.a0, gDataStable.a1, true); {
           //flexion angle
           renderKneeBonesAngle("#bonesFront", flexAngle, "front", "right")
           renderKneeBonesAngle("#bonesLateral", flexAngle, "lateral", "right")
-
+          flexion.updateChart([flexAngle], true);
+          tilt_rot.updateChart([vectorAngle(gDataStable.m0,gDataStable.m1 , true), vectorAngle(gDataStable.a1, [0, 0, 1], true)], true);
         }
       }
       let i, info="";

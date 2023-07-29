@@ -53,7 +53,7 @@ wdog = microcontroller.watchdog
 wdog.timeout = 5
 #wdog.mode = watchdog.WatchDogMode.RAISE
 
-version = "1.0.5"
+version = "1.0.6"
 # incoming data
 recvdata = ""   # rec data buffer from host
 en_recvd = True # enable receive data from host
@@ -81,7 +81,7 @@ try:
 
     advertisement = ProvideServicesAdvertisement(uart)
 
-    samples = array.array('H', [0] * 160)
+    samples = array.array('H', [0] * 80)
 
     def normalized_rms(values):
         minbuf = int(sum(values) / len(values))
@@ -89,6 +89,9 @@ try:
             return 0
         return int(math.sqrt(sum(float(sample - minbuf) *
                                  (sample - minbuf) for sample in values) / len(values)))
+    
+    def rnd_vec(x,p):
+        return [ round(elem, p) for elem in x ]
 
     apds9960.enable_proximity = True
     apds9960.enable_color = True
@@ -102,13 +105,14 @@ try:
     s = {}
     # initial values
     s["v"]    = version
+    """
     s["prx"]  = apds9960.proximity
     s["col"]  = apds9960.color_data
     s["tmp"]  = bmp280.temperature
     s["bar"]  = bmp280.pressure
     s["hum"]  = sht31d.relative_humidity
     s["alt"]  = bmp280.altitude
-
+    """
     #rms sound
     s["sn"]   = normalized_rms(samples)
 
@@ -135,12 +139,12 @@ try:
 
     while run:
         #wdog.feed()
-        samples = array.array('H', [0] * 160)
+        samples = array.array('H', [0] * 80)
         microphone.record(samples, len(samples))
         s= {}
         s["i"] = ix # loop number
         ix+=1 # incr loop count
-        s["t"] = time.monotonic_ns() # time stamp
+        #s["t"] = time.monotonic_ns() # time stamp
         #envcmd = True
         #print ("64:" + str(recdcmd))
         #if ble.connected:
@@ -155,17 +159,17 @@ try:
             s["alt"]  = bmp280.altitude
 
         #rms sound
-        s["sn"]   = normalized_rms(samples)
+        s["sn"]   = round(normalized_rms(samples),0)
 
         # local board acc/gyr/mags
-        s["m0"]   = lis3mdl.magnetic
-        s["a0"]   = lsm6ds33.acceleration
-        s["g0"]   = lsm6ds33.gyro
+        s["m0"]   = rnd_vec(lis3mdl.magnetic,2)
+        s["a0"]   = rnd_vec(lsm6ds33.acceleration,2)
+        s["g0"]   = rnd_vec(lsm6ds33.gyro,2)
 
         # 2nd board acc/gyro/mags
-        s["m1"] = lis3mdlp2.magnetic
-        s["a1"] = lsm6ds33p2.acceleration
-        s["g1"] = lsm6ds33p2.gyro
+        s["m1"] = rnd_vec(lis3mdlp2.magnetic,2)
+        s["a1"] = rnd_vec(lsm6ds33p2.acceleration,2)
+        s["g1"] = rnd_vec(lsm6ds33p2.gyro,2)
 
         # print(len(json.dumps(s)))
         if printDbg:
@@ -187,7 +191,7 @@ try:
 
         while not ble.connected:
             pass
-        s["tx"] = time.monotonic_ns() # transmit timestamp
+        #s["tx"] = time.monotonic_ns() # transmit timestamp
         if ble.connected:
             if (iscon == 0):
                 print("Connected")
@@ -211,7 +215,7 @@ try:
                             except :
                                 print("err recd cmd over ble" + ex)
                                 recdcmd ={}
-                uart.write("?>"+json.dumps(s)+"<?") # encode data with packet delims TODO: improve
+                uart.write("?>"+json.dumps(s,separators=(',', ':'))+"<?") # encode data with packet delims TODO: improve
             except :
                 print("err ble.connect" )
                 supervisor.reload() # reboot if exception
