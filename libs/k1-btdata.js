@@ -8,7 +8,7 @@ var gBLE = { connected: false };
 var gDataStable = {}; // last full json record 
 var gDataStorage = { max: 22 * 60 * 60, data: [], packetInfo: {}, pageStartTime: (new Date()).getTime() };
 
-UART.debug = 1
+UART.debug = 1;
 
 var sim = bw.getURLParam("sim", "false");
 var simData;

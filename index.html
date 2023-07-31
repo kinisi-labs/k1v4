@@ -20,12 +20,15 @@
   <!-- vectors and math -->
   <script src="./libs/sensordata.js"></script>
   <script src="./libs/www-ahrs.js"></script>
-  <script src="./libs/mc-ahrs.js"></script>
+  <!-- <script src="./libs/mc-ahrs.js"></script> -->
   <script src="./libs/mc-ahrs2.js"></script>
-  <link href="data:image/x-icon;base64,AAABAAEAEBAQAAEABAAoAQAAFgAAACgAAAAQAAAAIAAAAAEABAAAAAAAgAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAlv//AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAAAAAAAAABAAAAAAAAAAEQAAAAAAAAARAAAAAAAAABEQAAAAAAARERAAAAAAAAERAAAAAAAAAREAAAAAAAABERAAAAAAAAAREAAAAAAAABERAAAAAAAAEREAAAAAAAAAAAAAD9/wAA/f8AAPz/AAD8fwAA/H8AAPw/AAD8PwAA8B8AAPAPAAD4DwAA+D8AAPgfAAD8HwAA/A8AAPwPAAD8DwAA" rel="icon" type="image/x-icon" />
+  <link
+    href="data:image/x-icon;base64,AAABAAEAEBAQAAEABAAoAQAAFgAAACgAAAAQAAAAIAAAAAEABAAAAAAAgAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAlv//AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAAAAAAAAABAAAAAAAAAAEQAAAAAAAAARAAAAAAAAABEQAAAAAAARERAAAAAAAAERAAAAAAAAAREAAAAAAAABERAAAAAAAAAREAAAAAAAABERAAAAAAAAEREAAAAAAAAAAAAAD9/wAA/f8AAPz/AAD8fwAA/H8AAPw/AAD8PwAA8B8AAPAPAAD4DwAA+D8AAPgfAAD8HwAA/A8AAPwPAAD8DwAA"
+    rel="icon" type="image/x-icon" />
   <!-- 3D rendering -->
   <script src="./libs/3d-functions.js"></script>
-<!--
+  <script src="./libs/quaternion.min.js"></script>
+  <!--
   <script> bw.DOMInsertElement("head", bw.htmlFavicon("⚡", "black"))
     // running preson :  &#127939 
   </script>
@@ -115,13 +118,16 @@
       -webkit-transform: scaleX(-1);
       transform: scaleX(-1);
     }
+
     .buttonbar {
       padding-left: 1vw;
-      padding-top : 1rem;
+      padding-top: 1rem;
       padding-bottom: 1rem;
+      padding-right: 1vw;
       color: #aaa;
       vertical-align: middle;
     }
+
     .infobar {
       padding-left: 1vw;
       color: #aaa;
@@ -136,17 +142,19 @@
     }
 
     .sessionText {
-     resize: none;
+      resize: none;
       border-radius: 4px !important;
       color: #222;
       background-color: #eee;
       vertical-align: middle;
     }
+
     .sessionLabel {
       color: #ddd;
       padding-top: 0.3rem;
       vertical-align: middle;
     }
+
     .buttonStuff {
       float: right;
     }
@@ -164,7 +172,7 @@
       </div>
     </div>
     <div class="bw-row">
-      <div class="bw-col-11 buttonbar">
+      <div class="bw-col-12 buttonbar">
         <label class="sessionLabel" for="sessionNameN">Session Name:</label>
         <textarea id="sessionName" name="sessionNameN" rows="1" cols="20" class="sessionText"></textarea>
         <label class="sessionLabel" for="sessionHeightN">Height (cm):</label>
@@ -257,7 +265,7 @@
     else {
       bw.DOM("#infobarcontainer")[0].style.display = "none";
     }
-    bw.getURLParam("showstats","true")
+    bw.getURLParam("showstats", "true")
     const maxlen = 120; // chart len in points
 
     let a0 = newChartJSLineChart("#a0", 3, "Thigh Accel", maxlen, [-15, 15]);
@@ -280,10 +288,14 @@
     let o0 = newChartJSLineChart("#o0", 3, "Orientation 0", maxlen, [-200, 200]);
     let o1 = newChartJSLineChart("#o1", 3, "Orientation 1", maxlen, [-200, 200]);
 
-
-    let mahony0 = new Mahony(20);
-    let mahony1 = new Mahony(20);
-
+    let thighQuat = [1, 0, 0, 0];
+    let calfQuat = [1, 0, 0, 0];
+    let thighRPY = [0, 0, 0];
+    let calfRPY = [0, 0, 0];
+    /*
+        let mahony0 = new Mahony(20);
+        let mahony1 = new Mahony(20);
+    */
     let ahrs_init = false;
 
     //update renderings
@@ -339,19 +351,33 @@
           ahrs_init = true;
         }
         else {
-          mahony0.updateIMU(gDataStable.g0, gDataStable.a0, gDataStable.m0);
-          mahony1.updateIMU(gDataStable.g1, gDataStable.a1, gDataStable.m1);
 
+          //mahony0.updateIMU(gDataStable.g0, gDataStable.a0, gDataStable.m0);
+          // mahony1.updateIMU(gDataStable.g1, gDataStable.a1, gDataStable.m1);
+
+          thighQuat = bw.jsonClone(
+            MahonyAHRSupdate(...gDataStable.g0, ...gDataStable.a0, ...gDataStable.m0, thighQuat));
+
+          calfQuat = bw.jsonClone(
+            MahonyAHRSupdate(...gDataStable.g1, ...gDataStable.a1, ...gDataStable.m1, calfQuat));
+
+
+          thighRPY = new Quaternion(...thighQuat).toEuler();
+          calfRPY = new Quaternion(...calfQuat).toEuler();
 
           bw.DOM("#ahrs")[0].innerHTML =
-            "IMU 0 Euler: " + mahony0.getEulerAngles(true).map(x => x.toFixed(2)) + "<br>" +
-            "IMU 1 Euler: " + mahony1.getEulerAngles(true).map(x => x.toFixed(2)) + "<br>" +
+            //  "IMU 0 Euler: " + mahony0.getEulerAngles(true).map(x => x.toFixed(2)) + "<br>" +
+            // "IMU 1 Euler: " + mahony1.getEulerAngles(true).map(x => x.toFixed(2)) + "<br>" +
             "flexion: " + gDataStable.flexAngle.toFixed(2) + "<br>" +
             "tilt: " + gDataStable.tiltAngle.toFixed(2) + "<br>" +
-            "rotn: " + gDataStable.rotAngle.toFixed(2) + "<br>";
+            "rotn: " + gDataStable.rotAngle.toFixed(2) + "<br>" +
+            "thighQuat: " + thighQuat.map(x => x.toFixed(2)) + "<br>" +
+            "calfQuat: " + calfQuat.map(x => x.toFixed(2)) + "<br>"+
+            "thighRPY: " + Object.values(thighRPY).map(x => x.toFixed(2)) + "<br>" +
+            "calfRPY: " + Object.values(calfRPY).map(x => x.toFixed(2)) + "<br>";
 
-          o0.updateChart(mahony0.getEulerAngles(true), true);
-          o1.updateChart(mahony1.getEulerAngles(true), true);
+          o0.updateChart(vectorScale(Object.values(thighRPY), 180 / Math.PI), true);
+          o1.updateChart(vectorScale(Object.values(calfRPY), 180 / Math.PI), true);
 
         }
       }

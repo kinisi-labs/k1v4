@@ -3,15 +3,21 @@
 const sampleFreq = 50.0; // sample frequency in Hz
 const betaDef = 0.1; // 2 * proportional gain
 
-// Quaternion of the estimated orientation
-let q0 = 1, q1 = 0, q2 = 0, q3 = 0;
+const twoKp = 2.0 * 0.5; // 2 * proportional gain
+const twoKi = 2.0 * 0.0; // 2 * integral gain
 
-function MahonyAHRSupdate(gx, gy, gz, ax, ay, az, mx, my, mz) {
+// Quaternion of the estimated orientation
+//let q0 = 1, q1 = 0, q2 = 0, q3 = 0;
+let quat0 = [1, 0, 0, 0];
+
+function MahonyAHRSupdate(gx, gy, gz, ax, ay, az, mx, my, mz, quat) {
+
   let recipNorm;
   let hx, hy, _2bx, _2bz;
   let halfvx, halfvy, halfvz, halfwx, halfwy, halfwz;
   let halfex, halfey, halfez;
   let qa, qb, qc;
+  let q0 = quat[0], q1 = quat[1], q2 = quat[2], q3 = quat[3];
 
   // Use IMU algorithm if magnetometer measurement invalid (avoids NaN in magnetometer normalization)
   if ((mx === 0.0) && (my === 0.0) && (mz === 0.0)) {
@@ -109,13 +115,16 @@ function MahonyAHRSupdate(gx, gy, gz, ax, ay, az, mx, my, mz) {
   q1 *= recipNorm;
   q2 *= recipNorm;
   q3 *= recipNorm;
+
+  return [q0, q1, q2, q3];
 }
 
-function MahonyAHRSupdateIMU(gx, gy, gz, ax, ay, az) {
+function MahonyAHRSupdateIMU(gx, gy, gz, ax, ay, az, quat) {
     let recipNorm;
     let halfvx, halfvy, halfvz;
     let halfex, halfey, halfez;
     let qa, qb, qc;
+    let q0 = quat[0], q1 = quat[1], q2 = quat[2], q3 = quat[3];
 
     // Compute feedback only if accelerometer measurement valid (avoids NaN in accelerometer normalization)
     if (!((ax === 0.0) && (ay === 0.0) && (az === 0.0))) {
@@ -170,6 +179,8 @@ function MahonyAHRSupdateIMU(gx, gy, gz, ax, ay, az) {
     q1 *= recipNorm;
     q2 *= recipNorm;
     q3 *= recipNorm;
+
+    return [q0, q1, q2, q3];
 }
 
 /*
