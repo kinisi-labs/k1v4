@@ -13,6 +13,17 @@ UART.debug = 1
 var sim = bw.getURLParam("sim", "false");
 var simData;
 
+var doBLEConnect = function () {
+
+    console.log("attempting to connect...");
+    UART.connect(function (d) {
+        gBLE = d;
+        gBLE.connected = true;
+        gBLE.on("data", gBLEcallback);
+        gBLE.buf = "";
+        gBLE.jsonRec = { "recTime": (new Date()).getTime() };
+    });
+};
 
 if (sim != "false") {
     console.log("here")
@@ -31,14 +42,7 @@ if (sim != "false") {
     }
 }
 else {
-    console.log("connection ble");
-    UART.connect(function (d) {
-        gBLE = d;
-        gBLE.connected = true;
-        gBLE.on("data", gBLEcallback);
-        gBLE.buf = "";
-        gBLE.jsonRec = { "recTime": (new Date()).getTime() };
-    });
+    doBLEConnect();
 }
 var updateData = function (data) {
     //bw.DOM("#humidity-value")[0].innerHTML = bw.htmlJSON(data);
@@ -116,6 +120,7 @@ function btnGetInfo () {
 
 }
 function btnResetDataStorage() {
+    console.log("resetting data storage")
     gDataStorage.pageStartTime = (new Date()).getTime()
     gDataStorage.data = [];
 
@@ -136,4 +141,9 @@ function btnSaveData() {
         return value;
     });
     bw.saveClientFile("Kinisi-K1X-" + (new Date()).toISOString() + ".json", exportData);
+}
+
+
+function btnConnect() {
+    doBLEConnect();
 }
