@@ -46,3 +46,47 @@ vectorScale = function (a, s) {
     }
     return p;
 }
+
+vectorNorm = function (a) {
+    var m = vectorMag(a);
+    return vectorScale(a, 1/m);
+}
+/* create a rotation matrix about the specified axes */
+createRotMatrix = function (roll, pitch, yaw, degrees) {
+    if (degrees == true) {
+        roll *= 3.14159265/180;
+        pitch *= 3.14159265/180;
+        yaw *= 3.14159265/180;
+    }
+
+    var c1 = Math.cos(roll);
+    var s1 = Math.sin(roll);
+    var c2 = Math.cos(pitch);
+    var s2 = Math.sin(pitch);
+    var c3 = Math.cos(yaw);
+    var s3 = Math.sin(yaw);
+
+    var m = [
+        [c2 * c3, -c2 * s3, s2],
+        [c1 * s3 + c3 * s1 * s2, c1 * c3 - s1 * s2 * s3, -c2 * s1],
+        [s1 * s3 - c1 * c3 * s2, c3 * s1 + c1 * s2 * s3, c1 * c2]
+    ];
+
+    return m;
+}
+
+const mrotx = createRotMatrix(90, 0, 0, true);
+const mroty = createRotMatrix(0, 90, 0, true);
+const mrotz = createRotMatrix(0, 0, 90, true);
+
+/* rotate a vector a by 3x3 matrix m */
+vectorRot = function (a, m) {
+    var i=0, j=0, p=[];
+    for (i=0; i<3; i++) {
+        p[i] = 0;
+        for (j=0; j<3; j++) {
+            p[i] += a[j]*m[i][j];
+        }
+    }
+    return p;
+}

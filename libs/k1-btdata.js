@@ -6,17 +6,19 @@
 //BLE data fetch for k1 
 var gBLE = { connected: false };
 var gDataStable = {}; // last full json record 
-var gDataStorage = { max: 100 * 40, data: [], packetInfo: {} }
+var gDataStorage = { max: 22 * 60 * 60, data: [], packetInfo: {}, pageStartTime: (new Date()).getTime() };
 
 UART.debug = 1
 
 var sim = bw.getURLParam("sim", "false");
 var simData;
-bw.getJSONFile("sensor-data.json", function (d) { simData = d; })
+
+
 if (sim != "false") {
     console.log("here")
     if (sim == "load") {
-        //load from file
+        bw.getJSONFile("sensor-data.json", function (d) { simData = d; })
+
     }
     else {
         setInterval(function () {
@@ -80,10 +82,10 @@ var gBLEcallback = function (d) {
             gDataStorage.packetInfo.numBytes = (gDataStorage.packetInfo.numBytes || 0) + gBLE.buf.length;
             gDataStorage.startTime = (gDataStorage.startTime || (new Date()).getTime());
             gDataStorage.curTime = (new Date()).getTime();
-            gDataStorage.packetInfo.elapsedTime = (gDataStorage.curTime - gDataStorage.startTime)/1000;
+            gDataStorage.packetInfo.elapsedTime = (gDataStorage.curTime - gDataStorage.startTime) / 1000;
             gDataStorage.packetInfo.avgPacketSize = gDataStorage.packetInfo.numBytes / gDataStorage.packetInfo.numPackets;
-            gDataStorage.packetInfo.avgPacketsPerSec = gDataStorage.packetInfo.numPackets / (gDataStorage.packetInfo.elapsedTime );
-            gDataStorage.packetInfo.avgBytesPerSec = gDataStorage.packetInfo.numBytes / (gDataStorage.packetInfo.elapsedTime );
+            gDataStorage.packetInfo.avgPacketsPerSec = gDataStorage.packetInfo.numPackets / (gDataStorage.packetInfo.elapsedTime);
+            gDataStorage.packetInfo.avgBytesPerSec = gDataStorage.packetInfo.numBytes / (gDataStorage.packetInfo.elapsedTime);
             // bw.DOM("#dec",bw.htmlJSON(gBLE.jsonRec));
         }
         else
@@ -108,4 +110,30 @@ var asmPacket = function (s, accum) {
             accum += s;
     }
     return accum; //raw packet decode
+}
+
+function btnGetInfo () {
+
+}
+function btnResetDataStorage() {
+    gDataStorage.pageStartTime = (new Date()).getTime()
+    gDataStorage.data = [];
+
+    gDataStorage.sessionName = bw.DOM("#sessionName")[0].value ="";
+    gDataStorage.sessionHeight = bw.DOM("#sessionHeight")[0].value ="";
+    gDataStorage.sessionWeight = bw.DOM("#sessionWeight")[0].value ="";
+}
+function btnSaveData() {
+    // creates a time-stamped file to store on client computer
+    gDataStorage.sessionName = bw.DOM("#sessionName")[0].value;
+    gDataStorage.sessionHeight = bw.DOM("#sessionHeight")[0].value;
+    gDataStorage.sessionWeight = bw.DOM("#sessionWeight")[0].value;
+    let exportData = JSON.stringify(gDataStorage, function (key, value) {
+        // limit precision of floats
+        if (typeof value === 'number') {
+            return parseFloat(value.toFixed(4));
+        }
+        return value;
+    });
+    bw.saveClientFile("Kinisi-K1X-" + (new Date()).toISOString() + ".json", exportData);
 }
