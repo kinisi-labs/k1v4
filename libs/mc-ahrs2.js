@@ -3,8 +3,8 @@
 const sampleFreq = 50.0; // sample frequency in Hz
 const betaDef = 0.1; // 2 * proportional gain
 
-const twoKp = 2.0 * 0.5; // 2 * proportional gain
-const twoKi = 2.0 * 0.0; // 2 * integral gain
+const twoKp = 2.0 * 10.0; // 2 * proportional gain
+const twoKi = 2.0 * 3.0; // 2 * integral gain
 
 // Quaternion of the estimated orientation
 //let q0 = 1, q1 = 0, q2 = 0, q3 = 0;
