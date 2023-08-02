@@ -54,7 +54,10 @@ if (sim != "false") {
     else {
         doBLEConnect();
     }
+} else {
+    doBLEConnect();
 }
+    
     var updateData = function (data) {
 
         if (gBLE.connected != false)
@@ -154,6 +157,13 @@ if (sim != "false") {
         bw.saveClientFile("Kinisi-K1X-" + (new Date()).toISOString() + ".json", exportData);
     }
 
+    function btnLoadData() {
+        // loads a file from client computer
+        bw.loadClientFile(function (d) {
+            gDataStorage = JSON.parse(d);
+            gDataStorage.pageStartTime = (new Date()).getTime();
+        });
+    };
 
     function btnConnect() {
         doBLEConnect();

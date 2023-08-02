@@ -290,11 +290,11 @@
     // state vars
     let thighQuat = [1, 0, 0, 0];
     let calfQuat = [1, 0, 0, 0];
-    let thighIntergalFB = [0,0,0];
-    let calfIntergalFB = [0,0,0];
+    let thighIntergalFB = [0, 0, 0];
+    let calfIntergalFB = [0, 0, 0];
 
-    let thighState = {quat: [1, 0, 0, 0], intFB: [0,0,0]};
-    let calfState  = {quat: [1, 0, 0, 0], intFB: [0,0,0]};
+    let thighState = { quat: [1, 0, 0, 0], intFB: [0, 0, 0] };
+    let calfState = { quat: [1, 0, 0, 0], intFB: [0, 0, 0] };
 
     //computed from quaternion
     let thighRPY = [0, 0, 0];
@@ -365,24 +365,24 @@
           thighQuat =
             MahonyAHRSupdate(...gDataStable.g0, ...gDataStable.a0, ...gDataStable.m0, thighState.quat, thighState.intFB);
 
-          calfQuat = 
+          calfQuat =
             MahonyAHRSupdate(...gDataStable.g1, ...gDataStable.a1, ...gDataStable.m1, calfState.quat, calfState.intFB);
 
 
-          thighRPY =vectorScale( Object.values(new Quaternion(...thighQuat).toEuler()),180/Math.PI);
-          calfRPY = vectorScale( Object.values(new Quaternion(...calfQuat).toEuler()), 180/Math.PI);
+          thighRPY = vectorScale(Object.values(new Quaternion(...thighQuat).toEuler()), 180 / Math.PI);
+          calfRPY = vectorScale(Object.values(new Quaternion(...calfQuat).toEuler()), 180 / Math.PI);
 
           bw.DOM("#ahrs")[0].innerHTML =
             "flexion: " + gDataStable.flexAngle.toFixed(2) + "<br>" +
             "tilt: " + gDataStable.tiltAngle.toFixed(2) + "<br>" +
             "rotn: " + gDataStable.rotAngle.toFixed(2) + "<br>" +
             "thighQuat: " + thighQuat.map(x => x.toFixed(2)) + "<br>" +
-            "calfQuat: " + calfQuat.map(x => x.toFixed(2)) + "<br>"+
+            "calfQuat: " + calfQuat.map(x => x.toFixed(2)) + "<br>" +
             "thighRPY: " + thighRPY.map(x => x.toFixed(2).padStart(7)).join(", ") + "<br>" +
             "calfRPY: " + calfRPY.map(x => x.toFixed(2).padStart(7)).join(", ") + "<br>";
 
           o0.updateChart(thighRPY, true);
-          o1.updateChart(calfRPY , true);
+          o1.updateChart(calfRPY, true);
 
         }
       }
