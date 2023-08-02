@@ -12,6 +12,7 @@ UART.debug = 1;
 
 var sim = bw.getURLParam("sim", "false");
 var simData;
+var simDataTick = 0;
 
 var doBLEConnect = function () {
 
@@ -26,124 +27,134 @@ var doBLEConnect = function () {
 };
 
 if (sim != "false") {
-    console.log("here")
     if (sim == "load") {
-        bw.getJSONFile("sensor-data.json", function (d) { simData = d; })
+        bw.getJSONFile("sensor-data.json", function (d) {
+            simData = d;
 
+            gBLE.connected = true;
+            gBLE.buf = "";
+            gBLE.jsonRec = { "recTime": (new Date()).getTime() };
+            setInterval(function () {
+                gBLE.jsonRec.data =simData.data[simDataTick] ;
+                gDataStorage.packetInfo.numPackets = (gDataStorage.packetInfo.numPackets || 0) + 1;
+                gDataStorage.packetInfo.numBytes = (gDataStorage.packetInfo.numBytes || 0) + JSON.stringify(gBLE.jsonRec.data).length;
+                gDataStorage.startTime = (gDataStorage.startTime || (new Date()).getTime());
+                gDataStorage.curTime = (new Date()).getTime();
+                gDataStorage.packetInfo.elapsedTime = (gDataStorage.curTime - gDataStorage.startTime) / 1000;
+                gDataStorage.packetInfo.avgPacketSize = gDataStorage.packetInfo.numBytes / gDataStorage.packetInfo.numPackets;
+                gDataStorage.packetInfo.avgPacketsPerSec = gDataStorage.packetInfo.numPackets / (gDataStorage.packetInfo.elapsedTime);
+                gDataStorage.packetInfo.avgBytesPerSec = gDataStorage.packetInfo.numBytes / (gDataStorage.packetInfo.elapsedTime);
+
+                updateData(simData.data[simDataTick]);
+                simDataTick = (simDataTick + 1) % simData.data.length;
+            }, 25);
+
+        });
     }
     else {
-        setInterval(function () {
-            var simData = {};
-            updateData({});
-        }, 40)
-        gBLE.connected = true;
-        gBLE.buf = "";
-        gBLE.jsonRec = { "recTime": (new Date()).getTime() };
+        doBLEConnect();
     }
 }
-else {
-    doBLEConnect();
-}
-var updateData = function (data) {
-    //bw.DOM("#humidity-value")[0].innerHTML = bw.htmlJSON(data);
-    if (gBLE.connected != false)
-        if ("data" in gBLE.jsonRec) {
-            if (Object.keys(gBLE.jsonRec).length > 0)
-                var x;
-            for (x in gBLE.jsonRec.data)
-                gDataStable[x] = bw.jsonClone(gBLE.jsonRec.data[x]);
+    var updateData = function (data) {
 
-            var decData = bw.jsonClone(gDataStable);
+        if (gBLE.connected != false)
+            if ("data" in gBLE.jsonRec) {
+                if (Object.keys(gBLE.jsonRec).length > 0)
+                    var x;
+                for (x in gBLE.jsonRec.data)
+                    gDataStable[x] = bw.jsonClone(gBLE.jsonRec.data[x]);
 
-            decData["recTime"] = (new Date()).getTime(); // ms received timestamp
-            gDataStorage.data.push(decData);
-            if (gDataStorage.data.length > gDataStorage.max)
-                gDataStorage.data.shift(); //drop first
-        }
+                var decData = bw.jsonClone(gDataStable);
 
-}
+                decData["recTime"] = (new Date()).getTime(); // ms received timestamp
+                gDataStorage.data.push(decData);
+                if (gDataStorage.data.length > gDataStorage.max)
+                    gDataStorage.data.shift(); //drop first
+            }
 
-var timingDiffs = function () {
-    var x = gDataStorage.data.map(x => x.recTime);
-    var y = bw.jsonClone(x);
-    y.unshift(0);
-    var z = x.map((a, i) => a - y[i]);
-    z.shift();
-    return z;
-}
-
-var gBLEcallback = function (d) {
-    gBLE.buf = asmPacket(d, gBLE.buf);
-    gBLE.raw = d;
-    try { // try JSON decode ...
-        if (gBLE.buf[0] == "{" && gBLE.buf[gBLE.buf.length - 1] == "}") {
-            gBLE.jsonRec["data"] = JSON.parse(gBLE.buf);
-            var t = (new Date()).getTime();
-            gBLE.jsonRec["delTime"] = t - gBLE.jsonRec["recTime"];
-            gBLE.jsonRec["recTime"] = t;
-
-            gDataStorage.packetInfo.numPackets = (gDataStorage.packetInfo.numPackets || 0) + 1;
-            gDataStorage.packetInfo.numBytes = (gDataStorage.packetInfo.numBytes || 0) + gBLE.buf.length;
-            gDataStorage.startTime = (gDataStorage.startTime || (new Date()).getTime());
-            gDataStorage.curTime = (new Date()).getTime();
-            gDataStorage.packetInfo.elapsedTime = (gDataStorage.curTime - gDataStorage.startTime) / 1000;
-            gDataStorage.packetInfo.avgPacketSize = gDataStorage.packetInfo.numBytes / gDataStorage.packetInfo.numPackets;
-            gDataStorage.packetInfo.avgPacketsPerSec = gDataStorage.packetInfo.numPackets / (gDataStorage.packetInfo.elapsedTime);
-            gDataStorage.packetInfo.avgBytesPerSec = gDataStorage.packetInfo.numBytes / (gDataStorage.packetInfo.elapsedTime);
-            // bw.DOM("#dec",bw.htmlJSON(gBLE.jsonRec));
-        }
-        else
-            gBLE.jsonRec = {}
     }
-    catch (e) { gBLE.jsonRec = {} }
-    //bw.DOM("#raw",gBLE.buf);
-    updateData(gBLE.jsonRec); // callback with fully assembled json data available now.
 
-}
-var asmPacket = function (s, accum) {
-    s = bw.toa(s, "string", s, "");
-    accum = bw.toa(accum, "string", accum, "");
-    var i = s.indexOf("?>"); //start prefix found
-    if (i >= 0)
-        accum = s.substr(i + 2);
-    else {// not begin
-        i = s.indexOf("<?"); //end suffix found
-        if (i >= 0) // end found
-            accum += s.substr(0, i);
-        else // middle...
-            accum += s;
+    var timingDiffs = function () {
+        var x = gDataStorage.data.map(x => x.recTime);
+        var y = bw.jsonClone(x);
+        y.unshift(0);
+        var z = x.map((a, i) => a - y[i]);
+        z.shift();
+        return z;
     }
-    return accum; //raw packet decode
-}
 
-function btnGetInfo () {
+    var gBLEcallback = function (d) {
+        gBLE.buf = asmPacket(d, gBLE.buf);
+        gBLE.raw = d;
+        try { // try JSON decode ...
+            if (gBLE.buf[0] == "{" && gBLE.buf[gBLE.buf.length - 1] == "}") {
+                gBLE.jsonRec["data"] = JSON.parse(gBLE.buf);
+                var t = (new Date()).getTime();
+                gBLE.jsonRec["delTime"] = t - gBLE.jsonRec["recTime"];
+                gBLE.jsonRec["recTime"] = t;
 
-}
-function btnResetDataStorage() {
-    console.log("resetting data storage")
-    gDataStorage.pageStartTime = (new Date()).getTime()
-    gDataStorage.data = [];
-
-    gDataStorage.sessionName = bw.DOM("#sessionName")[0].value ="";
-    gDataStorage.sessionHeight = bw.DOM("#sessionHeight")[0].value ="";
-    gDataStorage.sessionWeight = bw.DOM("#sessionWeight")[0].value ="";
-}
-function btnSaveData() {
-    // creates a time-stamped file to store on client computer
-    gDataStorage.sessionName = bw.DOM("#sessionName")[0].value;
-    gDataStorage.sessionHeight = bw.DOM("#sessionHeight")[0].value;
-    gDataStorage.sessionWeight = bw.DOM("#sessionWeight")[0].value;
-    let exportData = JSON.stringify(gDataStorage, function (key, value) {
-        // limit precision of floats
-        if (typeof value === 'number') {
-            return parseFloat(value.toFixed(4));
+                gDataStorage.packetInfo.numPackets = (gDataStorage.packetInfo.numPackets || 0) + 1;
+                gDataStorage.packetInfo.numBytes = (gDataStorage.packetInfo.numBytes || 0) + gBLE.buf.length;
+                gDataStorage.startTime = (gDataStorage.startTime || (new Date()).getTime());
+                gDataStorage.curTime = (new Date()).getTime();
+                gDataStorage.packetInfo.elapsedTime = (gDataStorage.curTime - gDataStorage.startTime) / 1000;
+                gDataStorage.packetInfo.avgPacketSize = gDataStorage.packetInfo.numBytes / gDataStorage.packetInfo.numPackets;
+                gDataStorage.packetInfo.avgPacketsPerSec = gDataStorage.packetInfo.numPackets / (gDataStorage.packetInfo.elapsedTime);
+                gDataStorage.packetInfo.avgBytesPerSec = gDataStorage.packetInfo.numBytes / (gDataStorage.packetInfo.elapsedTime);
+               
+            }
+            else
+                gBLE.jsonRec = {}
         }
-        return value;
-    });
-    bw.saveClientFile("Kinisi-K1X-" + (new Date()).toISOString() + ".json", exportData);
-}
+        catch (e) { gBLE.jsonRec = {} }
+        //bw.DOM("#raw",gBLE.buf);
+        updateData(gBLE.jsonRec); // callback with fully assembled json data available now.
+
+    }
+    var asmPacket = function (s, accum) {
+        s = bw.toa(s, "string", s, "");
+        accum = bw.toa(accum, "string", accum, "");
+        var i = s.indexOf("?>"); //start prefix found
+        if (i >= 0)
+            accum = s.substr(i + 2);
+        else {// not begin
+            i = s.indexOf("<?"); //end suffix found
+            if (i >= 0) // end found
+                accum += s.substr(0, i);
+            else // middle...
+                accum += s;
+        }
+        return accum; //raw packet decode
+    }
+
+    function btnGetInfo() {
+
+    }
+    function btnResetDataStorage() {
+        console.log("resetting data storage")
+        gDataStorage.pageStartTime = (new Date()).getTime()
+        gDataStorage.data = [];
+
+        gDataStorage.sessionName = bw.DOM("#sessionName")[0].value = "";
+        gDataStorage.sessionHeight = bw.DOM("#sessionHeight")[0].value = "";
+        gDataStorage.sessionWeight = bw.DOM("#sessionWeight")[0].value = "";
+    }
+    function btnSaveData() {
+        // creates a time-stamped file to store on client computer
+        gDataStorage.sessionName = bw.DOM("#sessionName")[0].value;
+        gDataStorage.sessionHeight = bw.DOM("#sessionHeight")[0].value;
+        gDataStorage.sessionWeight = bw.DOM("#sessionWeight")[0].value;
+        let exportData = JSON.stringify(gDataStorage, function (key, value) {
+            // limit precision of floats
+            if (typeof value === 'number') {
+                return parseFloat(value.toFixed(4));
+            }
+            return value;
+        });
+        bw.saveClientFile("Kinisi-K1X-" + (new Date()).toISOString() + ".json", exportData);
+    }
 
 
-function btnConnect() {
-    doBLEConnect();
-}
+    function btnConnect() {
+        doBLEConnect();
+    }
