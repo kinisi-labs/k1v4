@@ -88,6 +88,7 @@ function MahonyAHRSupdate(gx, gy, gz, ax, ay, az, mx, my, mz, quat, integralFB) 
       integralFBy += twoKi * halfey * (1.0 / sampleFreq);
       integralFBz += twoKi * halfez * (1.0 / sampleFreq);
       integralFB = [integralFBx, integralFBy, integralFBz];
+      //console.log(integralFB);
       gx += integralFBx; // apply integral feedback
       gy += integralFBy;
       gz += integralFBz;
