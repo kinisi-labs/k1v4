@@ -10,7 +10,7 @@ const twoKi = 2.0 * 3.0; // 2 * integral gain
 //let q0 = 1, q1 = 0, q2 = 0, q3 = 0;
 let quat0 = [1, 0, 0, 0];
 
-function MahonyAHRSupdate(gx, gy, gz, ax, ay, az, mx, my, mz, quat) {
+function MahonyAHRSupdate(gx, gy, gz, ax, ay, az, mx, my, mz, quat, integralFB) {
 
   let recipNorm;
   let hx, hy, _2bx, _2bz;
@@ -18,6 +18,7 @@ function MahonyAHRSupdate(gx, gy, gz, ax, ay, az, mx, my, mz, quat) {
   let halfex, halfey, halfez;
   let qa, qb, qc;
   let q0 = quat[0], q1 = quat[1], q2 = quat[2], q3 = quat[3];
+  let integralFBx = integralFB[0], integralFBy = integralFB[1], integralFBz = integralFB[2];
 
   // Use IMU algorithm if magnetometer measurement invalid (avoids NaN in magnetometer normalization)
   if ((mx === 0.0) && (my === 0.0) && (mz === 0.0)) {
@@ -86,6 +87,7 @@ function MahonyAHRSupdate(gx, gy, gz, ax, ay, az, mx, my, mz, quat) {
       integralFBx += twoKi * halfex * (1.0 / sampleFreq); // integral error scaled by Ki
       integralFBy += twoKi * halfey * (1.0 / sampleFreq);
       integralFBz += twoKi * halfez * (1.0 / sampleFreq);
+      integralFB = [integralFBx, integralFBy, integralFBz];
       gx += integralFBx; // apply integral feedback
       gy += integralFBy;
       gz += integralFBz;
@@ -119,12 +121,13 @@ function MahonyAHRSupdate(gx, gy, gz, ax, ay, az, mx, my, mz, quat) {
   return [q0, q1, q2, q3];
 }
 
-function MahonyAHRSupdateIMU(gx, gy, gz, ax, ay, az, quat) {
+function MahonyAHRSupdateIMU(gx, gy, gz, ax, ay, az, quat,integralFB) {
     let recipNorm;
     let halfvx, halfvy, halfvz;
     let halfex, halfey, halfez;
     let qa, qb, qc;
     let q0 = quat[0], q1 = quat[1], q2 = quat[2], q3 = quat[3];
+    let integralFBx = integralFB[0], integralFBy = integralFB[1], integralFBz = integralFB[2];
 
     // Compute feedback only if accelerometer measurement valid (avoids NaN in accelerometer normalization)
     if (!((ax === 0.0) && (ay === 0.0) && (az === 0.0))) {
@@ -150,6 +153,8 @@ function MahonyAHRSupdateIMU(gx, gy, gz, ax, ay, az, quat) {
             integralFBx += twoKi * halfex * (1.0 / sampleFreq);  // integral error scaled by Ki
             integralFBy += twoKi * halfey * (1.0 / sampleFreq);
             integralFBz += twoKi * halfez * (1.0 / sampleFreq);
+            integralFB = [integralFBx, integralFBy, integralFBz];
+
             gx += integralFBx;  // apply integral feedback
             gy += integralFBy;
             gz += integralFBz;

@@ -290,6 +290,8 @@
 
     let thighQuat = [1, 0, 0, 0];
     let calfQuat = [1, 0, 0, 0];
+    let thighIntergalFB = [0,0,0];
+    let calfIntergalFB = [0,0,0];
     let thighRPY = [0, 0, 0];
     let calfRPY = [0, 0, 0];
     /*
@@ -356,10 +358,10 @@
           // mahony1.updateIMU(gDataStable.g1, gDataStable.a1, gDataStable.m1);
 
           thighQuat = bw.jsonClone(
-            MahonyAHRSupdate(...gDataStable.g0, ...gDataStable.a0, ...gDataStable.m0, thighQuat));
+            MahonyAHRSupdate(...gDataStable.g0, ...gDataStable.a0, ...gDataStable.m0, thighQuat, thighIntergalFB));
 
           calfQuat = bw.jsonClone(
-            MahonyAHRSupdate(...gDataStable.g1, ...gDataStable.a1, ...gDataStable.m1, calfQuat));
+            MahonyAHRSupdate(...gDataStable.g1, ...gDataStable.a1, ...gDataStable.m1, calfQuat, calfIntergalFB));
 
 
           thighRPY =vectorScale( Object.values(new Quaternion(...thighQuat).toEuler()),180/Math.PI);
@@ -371,8 +373,8 @@
             "rotn: " + gDataStable.rotAngle.toFixed(2) + "<br>" +
             "thighQuat: " + thighQuat.map(x => x.toFixed(2)) + "<br>" +
             "calfQuat: " + calfQuat.map(x => x.toFixed(2)) + "<br>"+
-            "thighRPY: " + thighRPY.map(x => x.toFixed(2)) + "<br>" +
-            "calfRPY: " + calfRPY.map(x => x.toFixed(2)) + "<br>";
+            "thighRPY: " + thighRPY.map(x => x.toFixed(2).padStart(7)).join(", ") + "<br>" +
+            "calfRPY: " + calfRPY.map(x => x.toFixed(2).padStart(7)).join(", ") + "<br>";
 
           o0.updateChart(thighRPY, true);
           o1.updateChart(calfRPY , true);

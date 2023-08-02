@@ -6,7 +6,7 @@ M A Chatterjee
 2020-11-20 started
 2020-12-03 for exception handling, two-way json
 
-require circuit python 6.0x or greater, adafruit libraries
+require circuit python 7.x or greater, adafruit libraries
 
 2023-07-26 : fixed reboot errors, samples issue
 
@@ -21,6 +21,8 @@ import time
 import array
 import math
 import board
+import busio
+from board import *
 import supervisor
 import json
 
@@ -53,14 +55,14 @@ wdog = microcontroller.watchdog
 wdog.timeout = 5
 #wdog.mode = watchdog.WatchDogMode.RAISE
 
-version = "1.0.6"
+version = "1.0.7"
 # incoming data
 recvdata = ""   # rec data buffer from host
 en_recvd = True # enable receive data from host
 
 try:
     # board init & setup
-    i2c = board.I2C()
+    i2c = busio.I2C(SCL,SDA,frequency=1000000)
     lsm6ds33   = adafruit_lsm6ds.lsm6ds33.LSM6DS33(i2c)
     lsm6ds33p2 = adafruit_lsm6ds.lsm6ds33.LSM6DS33(i2c,0x6B)
 
