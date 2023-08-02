@@ -28,14 +28,14 @@ var doBLEConnect = function () {
 
 if (sim != "false") {
     if (sim == "load") {
-        bw.getJSONFile("sensor-data.json", function (d) {
-            simData = d;
+        bw.getJSONFile("k1x-sensor-data.json", function (d) {
+            simData = JSON.parse(d);
 
             gBLE.connected = true;
             gBLE.buf = "";
             gBLE.jsonRec = { "recTime": (new Date()).getTime() };
             setInterval(function () {
-                gBLE.jsonRec.data =simData.data[simDataTick] ;
+                gBLE.jsonRec.data = simData.data[simDataTick] ;
                 gDataStorage.packetInfo.numPackets = (gDataStorage.packetInfo.numPackets || 0) + 1;
                 gDataStorage.packetInfo.numBytes = (gDataStorage.packetInfo.numBytes || 0) + JSON.stringify(gBLE.jsonRec.data).length;
                 gDataStorage.startTime = (gDataStorage.startTime || (new Date()).getTime());
@@ -47,7 +47,7 @@ if (sim != "false") {
 
                 updateData(simData.data[simDataTick]);
                 simDataTick = (simDataTick + 1) % simData.data.length;
-            }, 25);
+            }, 50);
 
         });
     }
