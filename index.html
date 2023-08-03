@@ -175,10 +175,13 @@
       <div class="bw-col-12 buttonbar">
         <label class="sessionLabel" for="sessionNameN">Session Name:</label>
         <textarea id="sessionName" name="sessionNameN" rows="1" cols="20" class="sessionText"></textarea>
+        &nbsp;&nbsp;&nbsp;
         <label class="sessionLabel" for="sessionHeightN">Height (cm):</label>
-        <textarea id="sessionHeight" name="sessionHeightN" rows="1" cols="8" class="sessionText"></textarea>
+        <textarea id="sessionHeight" name="sessionHeightN" rows="1" cols="6" class="sessionText"></textarea>
+        &nbsp;&nbsp;&nbsp;
         <label class="sessionLabel" for="sessionWeighttN">Weight (kg):</label>
-        <textarea id="sessionWeight" name="sessionWeighttN" rows="1" cols="8" class="sessionText"></textarea>
+        <textarea id="sessionWeight" name="sessionWeighttN" rows="1" cols="6" class="sessionText"></textarea>
+        <button class="buttonStuff" onclick="btnLoadData()">Load Data</button>
         <button class="buttonStuff" onclick="btnResetDataStorage()">Reset Data</button>
         <button class="buttonStuff" onclick="btnSaveData()">Export Data</button>
       </div>
@@ -287,6 +290,7 @@
 
     let o0 = newChartJSLineChart("#o0", 3, "Orientation 0", maxlen, [-200, 200]);
     let o1 = newChartJSLineChart("#o1", 3, "Orientation 1", maxlen, [-200, 200]);
+
     // state vars
     let thighQuat = [1, 0, 0, 0];
     let calfQuat = [1, 0, 0, 0];
@@ -294,11 +298,11 @@
     let calfIntergalFB = [0, 0, 0];
 
     let thighState = { quat: [1, 0, 0, 0], intFB: [0, 0, 0] };
-    let calfState = { quat: [1, 0, 0, 0], intFB: [0, 0, 0] };
+    let calfState  = { quat: [1, 0, 0, 0], intFB: [0, 0, 0] };
 
     //computed from quaternion
     let thighRPY = [0, 0, 0];
-    let calfRPY = [0, 0, 0];
+    let calfRPY  = [0, 0, 0];
     /*
         let mahony0 = new Mahony(20);
         let mahony1 = new Mahony(20);
