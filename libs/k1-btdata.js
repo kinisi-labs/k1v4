@@ -36,7 +36,7 @@ var doBLEdisconnect = function () {
 
 if (sim != "false") {
     if (sim == "load") {
-        bw.getJSONFile("k1x-sensor-data.json", function (d) {
+        bw.getJSONFile("k1x-sensor-data3.json", function (d) {
             simData = JSON.parse(d);
             gDataStorage.sessionHeight = simData.sessionHeight;
             gDataStorage.sessionWeight = simData.sessionWeight;
