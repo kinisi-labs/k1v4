@@ -378,7 +378,9 @@
             "thighQuat: " + thighQuat.map(x => x.toFixed(2)) + "<br>" +
             "calfQuat: " + calfQuat.map(x => x.toFixed(2)) + "<br>" +
             "thighRPY: " + thighRPY.map(x => x.toFixed(2).padStart(7)).join(", ") + "<br>" +
-            "calfRPY: " + calfRPY.map(x => x.toFixed(2).padStart(7)).join(", ") + "<br>";
+            "calfRPY: " + calfRPY.map(x => x.toFixed(2).padStart(7)).join(", ") + "<br>" +
+            "latitude: " + gDataStable.g_lat + "<br>" +
+            "longitude: " + gDataStable.g_lon + "<br>";
 
           o0.updateChart(thighRPY, true);
           o1.updateChart(calfRPY, true);
