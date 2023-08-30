@@ -348,7 +348,7 @@
         flexion.updateChart([flexAngle], true);
         gDataStable.tiltAngle = vectorAngle(vectorNorm(gDataStable.a0), vectorRot(vectorNorm(gDataStable.a1), mrotz), true);
         gDataStable.rotAngle = vectorAngle(vectorNorm(gDataStable.a0), vectorRot(vectorNorm(gDataStable.a1), mroty), true);
-        tilt_rot.updateChart([gDataStable.tiltAngle, gDataStable.rotAngle], true);
+        //tilt_rot.updateChart([gDataStable.tiltAngle, gDataStable.rotAngle], true);
 
       }
       if ("a0" in gDataStable) {
@@ -382,8 +382,8 @@
             "latitude: " + gDataStable.g_lat + "<br>" +
             "longitude: " + gDataStable.g_lon + "<br>";
 
-          o0.updateChart(thighRPY, true);
-          o1.updateChart(calfRPY, true);
+          //o0.updateChart(thighRPY, true);
+          //o1.updateChart(calfRPY, true);
 
         }
       }
