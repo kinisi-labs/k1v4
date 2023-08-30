@@ -72,6 +72,7 @@ import watchdog
 
 import _bleio
 import adafruit_hashlib
+import digitalio
 
 wdog = microcontroller.watchdog
 wdog.timeout = 5
@@ -82,7 +83,6 @@ version = "1.0.12 (cp8)"
 recvdata = ""   # rec data buffer from host
 en_recvd = True # enable receive data from host
 
-print ("kinisi k1x running firmware: " + version)
 
 def get_ble_name():
     m = adafruit_hashlib.md5()
@@ -91,6 +91,8 @@ def get_ble_name():
     full_digest = m.hexdigest()
 
     return "kinisi-labs-k1x-" + full_digest[-6:]
+
+print (get_ble_name() + " running firmware: " + version)
 
 def read_gps(s, last_print, debug_print):
     # Every second print out current location details if there's a fix.
@@ -168,6 +170,9 @@ try:
     bmp280 = adafruit_bmp280.Adafruit_BMP280_I2C(i2c)
     sht31d = adafruit_sht31d.SHT31D(i2c)
     microphone = audiobusio.PDMIn(board.MICROPHONE_CLOCK, board.MICROPHONE_DATA, sample_rate=16000, bit_depth=16)
+
+    touch_sensor = digitalio.DigitalInOut(board.D13)
+    touch_sensor.switch_to_input(digitalio.Pull.DOWN)
 
     uart_gps = busio.UART(board.TX, board.RX, baudrate=9600, timeout=10)
 
@@ -278,6 +283,7 @@ try:
         s["a1"]   = rnd_vec(icm2.acceleration,2)
         s["g1"]   = rnd_vec(icm2.gyro,2)
 
+        s["tch"] = touch_sensor.value
 
         last_time = read_gps(s, last_time, printDbg)
 
