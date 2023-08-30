@@ -77,7 +77,7 @@ wdog = microcontroller.watchdog
 wdog.timeout = 5
 #wdog.mode = watchdog.WatchDogMode.RAISE
 
-version = "1.0.11 (cp8)"
+version = "1.0.12 (cp8)"
 # incoming data
 recvdata = ""   # rec data buffer from host
 en_recvd = True # enable receive data from host
