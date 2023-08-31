@@ -164,7 +164,12 @@ try:
     lsm6ds33   = adafruit_lsm6ds.lsm6ds33.LSM6DS33(i2c)
     lis3mdl    = adafruit_lis3mdl.LIS3MDL(i2c)
 
-    icm2        = adafruit_icm20x_mod.ICM20948(i2c)
+    try:
+        icm2        = adafruit_icm20x_mod.ICM20948(i2c)
+    except Exception as e:
+        print('ICM2 not connected', e, file=sys.stderr)
+        icm2 = None
+
 
     apds9960 = adafruit_apds9960.apds9960.APDS9960(i2c)
     bmp280 = adafruit_bmp280.Adafruit_BMP280_I2C(i2c)
@@ -241,9 +246,14 @@ try:
     s["a0"]   = lsm6ds33.acceleration
     s["g0"]   = lsm6ds33.gyro
 
-    s["m1"]   = icm2.magnetic
-    s["a1"]   = icm2.acceleration
-    s["g1"]   = icm2.gyro
+    if icm2 is None:
+        s["m1"]   = [0., 0., 0.]
+        s["a1"]   = [0., 0., 0.]
+        s["g1"]   = [0., 0., 0.]
+    else:
+        s["m1"]   = icm2.magnetic
+        s["a1"]   = icm2.acceleration
+        s["g1"]   = icm2.gyro
 
     recdcmd = {"env":True}
 
@@ -278,10 +288,20 @@ try:
         s["a0"]   = rnd_vec(lsm6ds33.acceleration,2)
         s["g0"]   = rnd_vec(lsm6ds33.gyro,2)
 
-
-        s["m1"]   = rnd_vec(icm2.magnetic,2)
-        s["a1"]   = rnd_vec(icm2.acceleration,2)
-        s["g1"]   = rnd_vec(icm2.gyro,2)
+        if icm2 is None:
+            s["m1"]   = [0., 0., 0.]
+            s["a1"]   = [0., 0., 0.]
+            s["g1"]   = [0., 0., 0.]
+            if ix % 100 == 0:
+                try:
+                    icm2 = adafruit_icm20x_mod.ICM20948(i2c)
+                except Exception as e:
+                    print('ICM2 not connected', e, file=sys.stderr)
+                    icm2 = None
+        else:
+            s["m1"]   = rnd_vec(icm2.magnetic,2)
+            s["a1"]   = rnd_vec(icm2.acceleration,2)
+            s["g1"]   = rnd_vec(icm2.gyro,2)
 
         s["tch"] = touch_sensor.value
 
