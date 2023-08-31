@@ -22,8 +22,7 @@ function MahonyAHRSupdate(gx, gy, gz, ax, ay, az, mx, my, mz, quat, integralFB) 
 
   // Use IMU algorithm if magnetometer measurement invalid (avoids NaN in magnetometer normalization)
   if ((mx === 0.0) && (my === 0.0) && (mz === 0.0)) {
-    MahonyAHRSupdateIMU(gx, gy, gz, ax, ay, az);
-    return;
+    return MahonyAHRSupdateIMU(gx, gy, gz, ax, ay, az, quat, integralFB);
   }
 
   // Compute feedback only if accelerometer measurement valid (avoids NaN in accelerometer normalization)
