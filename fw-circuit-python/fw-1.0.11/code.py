@@ -26,6 +26,7 @@ import busio
 from board import *
 import supervisor
 import json
+import traceback
 
 #hw specific
 import audiobusio
@@ -73,10 +74,6 @@ import watchdog
 import _bleio
 import adafruit_hashlib
 import digitalio
-
-wdog = microcontroller.watchdog
-wdog.timeout = 5
-#wdog.mode = watchdog.WatchDogMode.RAISE
 
 version = "1.0.12 (cp8)"
 # incoming data
@@ -225,7 +222,7 @@ try:
     ix = 0 # packet number
     print("Kinisi: Waiting to connect")  # serial port
 
-    iscon = 0  # is connected
+    iscon = False  # is connected
     s = {}
     # initial values
     s["v"]    = version
@@ -261,6 +258,12 @@ try:
     run = True
 
     last_time = time.monotonic()
+
+    wdog = microcontroller.watchdog
+    wdog.timeout = 5
+    wdog.mode = watchdog.WatchDogMode.RESET
+
+
     while run:
         #wdog.feed()
         #microphone.record(samples, len(samples))
@@ -315,13 +318,15 @@ try:
             ble.start_advertising(advertisement)
 
         while not ble.connected:
+            wdog.feed()
+            time.sleep(0.5)
             pass
 
         #s["tx"] = time.monotonic_ns() # transmit timestamp
         if ble.connected:
-            if (iscon == 0):
+            if not iscon:
                 print("Connected")
-                iscon += 1
+                iscon = True
 
             #input from host (slow..)
             try :
@@ -343,14 +348,18 @@ try:
                                 print("err recd cmd over ble" + ex)
                                 recdcmd ={}
                 uart.write("?>"+json.dumps(s,separators=(',', ':'))+"<?") # encode data with packet delims TODO: improve
-            except :
+                wdog.feed()
+            except Exception as e:
                 print("err ble.connect" )
+                traceback.print_exception(e)
                 supervisor.reload() # reboot if exception
         else:
-            iscon=0
+            print('BLE disconnected')
+            iscon=False
 
 except Exception as e:
     print("err main" , e)
+    traceback.print_exception(e)
     supervisor.reload() #reboot if exceptions
 
 # debug sensor packet to serial
