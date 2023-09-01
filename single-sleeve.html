@@ -103,6 +103,7 @@
       height: 100%;
       padding: 4px;
     }
+
     .wheight {
       height: 100%;
       padding: 4px;
@@ -113,6 +114,7 @@
       height: 33%;
       padding: 4px;
     }
+
     .sepHeight {
       height: 1vh;
     }
@@ -206,7 +208,7 @@
     </div>
     <!-- first row -->
     <div class="bw-row coreRowHeight">
-      <div class="bw-col-3 bonesHeight">     
+      <div class="bw-col-3 bonesHeight">
         <div class="widget"><img id="bonesFront" style="width:100%;height:100%"></img></div>
       </div>
 
@@ -215,19 +217,18 @@
       </div>
 
       <div class="bw-col-3 bonesHeight">
-        <div class="slimChart"> <canvas class="widget" id="a0"></canvas></div>
-        <div class="slimChart"> <canvas class="widget" id="g0"></canvas></div>
-        <div class="slimChart"> <canvas class="widget" id="m0"></canvas></div>
+        <div class="slimChart"> <canvas class="widget" id="flex"></canvas></div>
+        <div class="slimChart"> <canvas class="widget" id="rotation"></canvas></div>
+        <div class="slimChart"> <canvas class="widget" id="tilt"></canvas></div>
       </div>
 
       <div class="bw-col-3 bonesHeight">
-        <div class="slimChart"> <canvas class="widget" id="a1"></canvas></div>
-        <div class="slimChart"> <canvas class="widget" id="g1"></canvas></div>
-        <div class="slimChart"> <canvas class="widget" id="m1"></canvas></div>
+        <div class="slimChart"> <canvas class="widget" id="thigh"></canvas></div>
+        <div class="slimChart"> <canvas class="widget" id="calf"></canvas></div>
+        <div class="slimChart"> <canvas class="widget" id="sound"></canvas></div>
       </div>
     </div>
 
-  
 
   </div>
   </div>
@@ -243,13 +244,13 @@
     bw.getURLParam("showstats", "true")
     const maxlen = 120; // chart len in points
 
-    let a0 = newChartJSLineChart("#a0", 3, "Thigh Accel", maxlen, [-20, 20]);
-    let g0 = newChartJSLineChart("#g0", 3, "Thigh Gyro", maxlen, [-500, 500]);
-    let m0 = newChartJSLineChart("#m0", 3, "Thigh Mags", maxlen, [-250, 250]);
+    let chartFlex = newChartJSLineChart("#flex", 1, "Flexion", maxlen, [-20, 150]);
+    let chartRot = newChartJSLineChart("#rotation", 1, "Rotation", maxlen, [-30, 30]);
+    let chartTilt = newChartJSLineChart("#tilt", 1, "Tilt", maxlen, [-30, 30]);
 
-    let a1 = newChartJSLineChart("#a1", 3, "Calf Accel", maxlen, [-20, 20]);
-    let g1 = newChartJSLineChart("#g1", 3, "Calf Gyro", maxlen, [-500, 500]);
-    let m1 = newChartJSLineChart("#m1", 3, "Calf Mags", maxlen, [-250, 250]);
+    let chartThigh = newChartJSLineChart("#thigh", 2, "Thigh Accel + Force", maxlen, [-50, 50]);
+    let chartCalf = newChartJSLineChart("#calf", 2, "Shin  Accel + Force", maxlen, [-50, 50]);
+    let chartSound = newChartJSLineChart("#sound", 1, "Sound Energy", maxlen, [0, 200]);
 
 
     //let sn = newChartJSLineChart("#sn", 1, "Sound Energy", maxlen, [0, 120]);
@@ -260,83 +261,99 @@
 
     //let tilt_rot = newChartJSLineChart("#tilt_rot", 2, "Tilt And Rotation", maxlen, [-150, 150]);
 
-   // let o0 = newChartJSLineChart("#o0", 3, "Orientation 0", maxlen, [-200, 200]);
-   // let o1 = newChartJSLineChart("#o1", 3, "Orientation 1", maxlen, [-200, 200]);
+    // let o0 = newChartJSLineChart("#o0", 3, "Orientation 0", maxlen, [-200, 200]);
+    // let o1 = newChartJSLineChart("#o1", 3, "Orientation 1", maxlen, [-200, 200]);
     // state vars
     let thighQuat = [1, 0, 0, 0];
-    let calfQuat  = [1, 0, 0, 0];
-    let thighIntergalFB = [0,0,0];
-    let calfIntergalFB  = [0,0,0];
+    let calfQuat = [1, 0, 0, 0];
+    let thighIntergalFB = [0, 0, 0];
+    let calfIntergalFB = [0, 0, 0];
 
-    let thighState = {quat: [1, 0, 0, 0], intFB: [0,0,0]};
-    let calfState  = {quat: [1, 0, 0, 0], intFB: [0,0,0]};
+    let thighState = { quat: [1, 0, 0, 0], intFB: [0, 0, 0] };
+    let calfState = { quat: [1, 0, 0, 0], intFB: [0, 0, 0] };
 
     //computed from quaternion
     let thighRPY = [0, 0, 0];
     let calfRPY = [0, 0, 0];
-  
+
     let ahrs_init = false;
 
-    //update renderings
-    setInterval(function () {
+    //update charts
+    /* requires this data structure :
+    data : {
+      flexion : [flexional_angle], // degrees
+      tilt    : [tilt_angle], // degrees
+      rotation: [rotation_angle], // degrees
+      thigh   : [accel, force], // accel in g, force in N
+      calf    : [accel, force], // accel in g, force in N
+      sn      : [sound_energy], // sound energy
+    }
+    use vectorScale to scale vectors to degrees like this:
+      vectorScale(angle_in_radians, 57)
+    */
 
+    let renderCharts = function (data) {
 
-      var gd = gDataStable;
-      if ("a0" in gDataStable)
-        a0.updateChart(gDataStable["a0"], true);
+      if ("flexion" in data)
+        chartFlex.updateChart(data["flexion"], true);
 
-      if ("g0" in gDataStable)
-        g0.updateChart(vectorScale(gDataStable["g0"], 57), true);
+      if ("tilt" in data)
+        chartTilt.updateChart(data["tilt"], true);
 
-      if ("m0" in gDataStable) {
-        m0.updateChart(gDataStable["m0"], true);
+      if ("rotation" in data) {
+        chartRot.updateChart(data["rotation"], true);
       }
 
-      if ("a1" in gDataStable)
-        a1.updateChart(gDataStable["a1"], true);
+      if ("thigh" in data)
+        chartThigh.updateChart(data["thigh"], true);
 
-      if ("g1" in gDataStable)
-        g1.updateChart(vectorScale(gDataStable["g1"], 57), true);
+      if ("calf" in data)
+        chartCalf.updateChart(vectorScale(data["calf"], 57), true);
 
-      if ("m1" in gDataStable) {
-        m1.updateChart(gDataStable["m1"], true);
-
-      }
-
-      if ("sn" in gDataStable) {
+      if ("sn" in data) {
         let alpha = 0.8;
         let alphaDC = 0.01;
-        snAvg = snAvg * (1 - alpha) + gDataStable["sn"] * (alpha);
-        snDCEnergy = snAvg * (1 - alphaDC) + gDataStable["sn"] * (alphaDC);
+        snAvg = snAvg * (1 - alpha) + data["sn"][0] * (alpha);
+        snDCEnergy = snAvg * (1 - alphaDC) + data["sn"][0] * (alphaDC);
         //let snS = bw.mapScale(gDataStable["sn"],0,15000,0,90);
         //sn.updateChart([5*Math.log2(gDataStable["sn"])], true);
-        //sn.updateChart([8 * Math.log2(snAvg)], true);
+        chartSound.updateChart([10 * Math.log10(snAvg)], true);
       }
-      if ("a0" in gDataStable && "a1" in gDataStable) {
-        let flexAngle = vectorAngle(vectorNorm(gDataStable.a0), vectorNorm(gDataStable.a1), true);
-        gDataStable.flexAngle = flexAngle;
-        //flexion angle
-        renderKneeBonesAngle("#bonesFront", flexAngle, "front", "right")
-        renderKneeBonesAngle("#bonesLateral", flexAngle, "lateral", "right")
-        //flexion.updateChart([flexAngle], true);
-        gDataStable.tiltAngle = vectorAngle(vectorNorm(gDataStable.a0), vectorRot(vectorNorm(gDataStable.a1), mrotz), true);
-        gDataStable.rotAngle = vectorAngle(vectorNorm(gDataStable.a0), vectorRot(vectorNorm(gDataStable.a1), mroty), true);
-        //tilt_rot.updateChart([gDataStable.tiltAngle, gDataStable.rotAngle], true);
 
-      }
-  
-      
+      renderKneeBonesAngle("#bonesFront", data.flexion[0], "front", "right")
+      renderKneeBonesAngle("#bonesLateral", data.flexion[0], "lateral", "right")
 
 
+    } // end of renderCharts
+
+
+    let renderInfoArea= function(data) {
       // stats area refresh
       let i, info = "";
-      for (i in gDataStorage.packetInfo) {
-        let k = i, v = gDataStorage.packetInfo[i];
+      for (i in data.packetInfo) {
+        let k = i, v = data.packetInfo[i];
         info += k + ": " + v.toFixed(2) + "&nbsp;&nbsp;";
       }
       document.getElementById("info").innerHTML = info;
+    }
 
-    }, 100);
+    setInterval(
+      () => {
+        let thigh= bw.mapScale(Math.sin(Date.now() / 1000), -1, 1, -30, 150);
+        let calf = bw.mapScale(Math.sin(Date.now() / 1000), -1, 1, -30, 150);
+        
+        let data = {
+          flexion:  [bw.mapScale(Math.sin(Date.now() / 1000), -1, 1, 0, 90)],
+          tilt:     [bw.mapScale(Math.sin(Date.now() / 1000), -1, 1, -30, 30)],
+          rotation: [bw.mapScale(Math.sin(Date.now() / 1000), -1, 1, -20, 20)],
+          thigh:    [thigh,thigh * 15], // sim accel, accl* simulated thigh weight
+          calf:     [calf, calf * 9], // sim accel, accel *  simulated calf weight
+          sn:       [1000 * Math.sin(Date.now() / 1000)], // simulated sound energy
+        }
+        renderCharts(data)
+      }
+      , 100);
+
 
     /*
         // BLE request enviroment data
