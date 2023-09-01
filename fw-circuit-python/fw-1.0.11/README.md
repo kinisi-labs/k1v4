@@ -30,8 +30,18 @@ Note that this code uses the modified Adafruit_ICM20x_mod.py instead of the Adaf
 
 If you have trouble copying code.py to the drive, try putting the device into safe mode. Do this by tapping the reset button, and then tapping it a second time once the LED turns yellow. In safe mode, no code is run, so you'll have to reset the device when you are ready to run the code.
 
-## TODO 2023-08-27
-update the Adafruit_ICM20x_mod.py to an .mpy file (need to use proper mpy-cross tool)
-merge code-gps.py to code.py  
+# Update Script
+Instead of the manually update instructions you can run
+```
+    ./update_code.sh -b
+```
+to update the bootloader, runtime, and code. If you want to update the runtime and code, run
+```
+    ./update_code.sh -r
+    # or
+    ./update_code.sh # if in bootloader mode when the script starts, i.e. double tap the reset button and LED turns green
+```
+To update just the code, run `./update_code.sh`. It's most reliable to update the code while in safe mode.
 
+The code update will be faster if you install rsync (otherwise the lib folder is deleted and recopied).
 
