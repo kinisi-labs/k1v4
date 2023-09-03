@@ -96,7 +96,16 @@ var timingDiffs = function () {
     z.shift();
     return z;
 }*/
-
+/*
+    // BLE request enviroment data
+    setInterval(function () {
+        try {
+        if (gBLE.connected)
+            gBLE.write(JSON.stringify({ "env": "true" })); // fw 1.0.x allows 2 way coms via BLE json
+        }
+        catch (e) { }
+    }, 10000); // every 10 seconds update the environment (pressure, altitude, etc)
+*/
 var gBLEcallback = function (d) {
     gBLE.buf = asmPacket(d, gBLE.buf);
     gBLE.raw = d;

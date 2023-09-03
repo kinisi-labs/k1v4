@@ -228,7 +228,11 @@
         <div class="slimChart"> <canvas class="widget" id="sound"></canvas></div>
       </div>
     </div>
-
+    <div class="bw-row">
+      <div class="bw-col-12">
+        <div class="widget" id="ahrs" style="width:96%;height:100%"></div>
+      </div>
+    </div>
 
   </div>
   </div>
@@ -244,37 +248,22 @@
     bw.getURLParam("showstats", "true")
     const maxlen = 120; // chart len in points
 
-    let chartFlex = newChartJSLineChart("#flex", 1, "Flexion", maxlen, [-20, 150]);
-    let chartRot = newChartJSLineChart("#rotation", 1, "Rotation", maxlen, [-30, 30]);
-    let chartTilt = newChartJSLineChart("#tilt", 1, "Tilt", maxlen, [-30, 30]);
+    let chartFlex   = newChartJSLineChart("#flex",      1, "Flexion", maxlen, [-20, 150]);
+    let chartRot    = newChartJSLineChart("#rotation",  1, "Rotation", maxlen, [-30, 30]);
+    let chartTilt   = newChartJSLineChart("#tilt",      1, "Tilt", maxlen, [-30, 30]);
 
-    let chartThigh = newChartJSLineChart("#thigh", 2, "Thigh Accel + Force", maxlen, [-50, 50]);
-    let chartCalf = newChartJSLineChart("#calf", 2, "Shin  Accel + Force", maxlen, [-50, 50]);
-    let chartSound = newChartJSLineChart("#sound", 1, "Sound Energy", maxlen, [0, 200]);
-
+    let chartThigh  = newChartJSLineChart("#thigh",     2, "Thigh Accel + Force", maxlen, [-50, 50]);
+    let chartCalf   = newChartJSLineChart("#calf",      2, "Shin  Accel + Force", maxlen, [-50, 50]);
+    let chartSound  = newChartJSLineChart("#sound",     1, "Sound Energy", maxlen, [0, 200]);
 
     //let sn = newChartJSLineChart("#sn", 1, "Sound Energy", maxlen, [0, 120]);
     let snAvg = 0;
     let snDCEnergy = 0;
 
-    //let flexion = newChartJSLineChart("#flexion", 1, "Flexion Angle", maxlen, [-30, 150]);
 
-    //let tilt_rot = newChartJSLineChart("#tilt_rot", 2, "Tilt And Rotation", maxlen, [-150, 150]);
+    let thighState    = { quat: [1, 0, 0, 0], intFB: [0, 0, 0], RPY : [0, 0, 0]};
+    let calfState     = { quat: [1, 0, 0, 0], intFB: [0, 0, 0], RPY : [0, 0, 0]};
 
-    // let o0 = newChartJSLineChart("#o0", 3, "Orientation 0", maxlen, [-200, 200]);
-    // let o1 = newChartJSLineChart("#o1", 3, "Orientation 1", maxlen, [-200, 200]);
-    // state vars
-    let thighQuat = [1, 0, 0, 0];
-    let calfQuat = [1, 0, 0, 0];
-    let thighIntergalFB = [0, 0, 0];
-    let calfIntergalFB = [0, 0, 0];
-
-    let thighState = { quat: [1, 0, 0, 0], intFB: [0, 0, 0] };
-    let calfState = { quat: [1, 0, 0, 0], intFB: [0, 0, 0] };
-
-    //computed from quaternion
-    let thighRPY = [0, 0, 0];
-    let calfRPY = [0, 0, 0];
 
     let ahrs_init = false;
 
