@@ -46,7 +46,7 @@ const  gchartJSDefaultOptions = {
 // options == full chartjs supported options
 
 
-let newChartJSLineChart = function (domEl, dims, title, maxXLen, yrange = null, options = gchartJSDefaultOptions ) {
+let newChartJSLineChart = function (domEl, dims, title, maxXLen, yrange = null,  yrange1 = null, options = gchartJSDefaultOptions ) {
 
     let el = bw.DOM(domEl)
     if (el.length <1) {
@@ -95,6 +95,13 @@ let newChartJSLineChart = function (domEl, dims, title, maxXLen, yrange = null, 
         chartOpts.options.scales.y.min = yrange[0];
         chartOpts.options.scales.y.max = yrange[1];
     }
+
+    if (bw.typeOf(yrange1) == "array") {
+        chartOpts.options.scales.y1 = {beginAtZero: true,position: 'right'};
+        chartOpts.options.scales.y1.min = yrange1[0];
+        chartOpts.options.scales.y1.max = yrange1[1];
+    }
+    
     // create a new chart object
     const chart = new Chart(ctx, chartOpts);
     chart.xw_maxLength = maxXLen;

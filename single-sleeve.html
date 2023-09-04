@@ -209,28 +209,28 @@
     <!-- first row -->
     <div class="bw-row coreRowHeight">
       <div class="bw-col-3 bonesHeight">
-        <div class="widget"><img id="bonesFront" style="width:100%;height:100%"></img></div>
+        <div class="widget"><img id="bonesFront0" style="width:100%;height:100%"></img></div>
       </div>
 
       <div class="bw-col-3 bonesHeight">
-        <div class="widget"><img id="bonesLateral" style="width:100%;height:100%"></img></div>
+        <div class="widget"><img id="bonesLateral0" style="width:100%;height:100%"></img></div>
       </div>
 
       <div class="bw-col-3 bonesHeight">
-        <div class="slimChart"> <canvas class="widget" id="flex"></canvas></div>
-        <div class="slimChart"> <canvas class="widget" id="rotation"></canvas></div>
-        <div class="slimChart"> <canvas class="widget" id="tilt"></canvas></div>
+        <div class="slimChart"> <canvas class="widget" id="flex0"></canvas></div>
+        <div class="slimChart"> <canvas class="widget" id="rotation0"></canvas></div>
+        <div class="slimChart"> <canvas class="widget" id="tilt0"></canvas></div>
       </div>
 
       <div class="bw-col-3 bonesHeight">
-        <div class="slimChart"> <canvas class="widget" id="thigh"></canvas></div>
-        <div class="slimChart"> <canvas class="widget" id="calf"></canvas></div>
-        <div class="slimChart"> <canvas class="widget" id="sound"></canvas></div>
+        <div class="slimChart"> <canvas class="widget" id="thigh0"></canvas></div>
+        <div class="slimChart"> <canvas class="widget" id="calf0"></canvas></div>
+        <div class="slimChart"> <canvas class="widget" id="sound0"></canvas></div>
       </div>
     </div>
     <div class="bw-row">
-      <div class="bw-col-12">
-        <div class="widget" id="ahrs" style="width:96%;height:100%"></div>
+      <div class="bw-col-12" style="padding-left:0.5%; padding-right: 0.5%;">
+        <div class="widget" id="ahrs" style=" height:100%"></div>
       </div>
     </div>
 
@@ -248,23 +248,23 @@
     bw.getURLParam("showstats", "true")
     const maxlen = 120; // chart len in points
 
-    let chartFlex   = newChartJSLineChart("#flex",      1, "Flexion", maxlen, [-20, 150]);
-    let chartRot    = newChartJSLineChart("#rotation",  1, "Rotation", maxlen, [-30, 30]);
-    let chartTilt   = newChartJSLineChart("#tilt",      1, "Tilt", maxlen, [-30, 30]);
+    let charts0 = {
+      flex:     newChartJSLineChart("#flex0",      1, "Flexion", maxlen, [-20, 150]),
+      rot :     newChartJSLineChart("#rotation0",  1, "Rotation", maxlen, [-30, 30]),
+      tilt :    newChartJSLineChart("#tilt0",      1, "Tilt", maxlen, [-30, 30]),
+      thigh:    newChartJSLineChart("#thigh0",     2, "Thigh Accel + Force", maxlen, [-50, 50], [0, 100]),
+      calf:     newChartJSLineChart("#calf0",      2, "Shin  Accel + Force", maxlen, [-50, 50], [0, 100]),
+      sound:    newChartJSLineChart("#sound0",     1, "Sound Energy", maxlen, [0, 200]),
+      bonesFront:   "#bonesFront0",
+      bonesLateral: "#bonesLateral0"
+    }
 
-    let chartThigh  = newChartJSLineChart("#thigh",     2, "Thigh Accel + Force", maxlen, [-50, 50]);
-    let chartCalf   = newChartJSLineChart("#calf",      2, "Shin  Accel + Force", maxlen, [-50, 50]);
-    let chartSound  = newChartJSLineChart("#sound",     1, "Sound Energy", maxlen, [0, 200]);
-
-    //let sn = newChartJSLineChart("#sn", 1, "Sound Energy", maxlen, [0, 120]);
     let snAvg = 0;
     let snDCEnergy = 0;
 
 
     let thighState    = { quat: [1, 0, 0, 0], intFB: [0, 0, 0], RPY : [0, 0, 0]};
     let calfState     = { quat: [1, 0, 0, 0], intFB: [0, 0, 0], RPY : [0, 0, 0]};
-
-
     let ahrs_init = false;
 
     //update charts
@@ -281,23 +281,23 @@
       vectorScale(angle_in_radians, 57)
     */
 
-    let renderCharts = function (data) {
+    let renderCharts = function (charts, data) {
 
       if ("flexion" in data)
-        chartFlex.updateChart(data["flexion"], true);
+        charts.flex.updateChart(data["flexion"], true);
 
       if ("tilt" in data)
-        chartTilt.updateChart(data["tilt"], true);
+        charts.tilt.updateChart(data["tilt"], true);
 
       if ("rotation" in data) {
-        chartRot.updateChart(data["rotation"], true);
+        charts.rot.updateChart(data["rotation"], true);
       }
 
       if ("thigh" in data)
-        chartThigh.updateChart(data["thigh"], true);
+        charts.thigh.updateChart(data["thigh"], true);
 
       if ("calf" in data)
-        chartCalf.updateChart(vectorScale(data["calf"], 57), true);
+        charts.calf.updateChart(vectorScale(data["calf"], 57), true);
 
       if ("sn" in data) {
         let alpha = 0.8;
@@ -306,15 +306,13 @@
         snDCEnergy = snAvg * (1 - alphaDC) + data["sn"][0] * (alphaDC);
         //let snS = bw.mapScale(gDataStable["sn"],0,15000,0,90);
         //sn.updateChart([5*Math.log2(gDataStable["sn"])], true);
-        chartSound.updateChart([10 * Math.log10(snAvg)], true);
+        charts.sound.updateChart([10 * Math.log10(snAvg)], true);
       }
 
-      renderKneeBonesAngle("#bonesFront", data.flexion[0], "front", "right")
-      renderKneeBonesAngle("#bonesLateral", data.flexion[0], "lateral", "right")
-
+      renderKneeBonesAngle(charts.bonesFront, data.flexion[0], "front", "right")
+      renderKneeBonesAngle(charts.bonesLateral, data.flexion[0], "lateral", "right")
 
     } // end of renderCharts
-
 
     let renderInfoArea= function(data) {
       // stats area refresh
@@ -337,23 +335,14 @@
           rotation: [bw.mapScale(Math.sin(Date.now() / 1000), -1, 1, -20, 20)],
           thigh:    [thigh,thigh * 15], // sim accel, accl* simulated thigh weight
           calf:     [calf, calf * 9], // sim accel, accel *  simulated calf weight
-          sn:       [1000 * Math.sin(Date.now() / 1000)], // simulated sound energy
+          sn:       [100+100 * Math.sin(Date.now() / 100)], // simulated sound energy
         }
-        renderCharts(data)
+        renderCharts(charts0,data)
       }
-      , 100);
+      , 50);
 
 
-    /*
-        // BLE request enviroment data
-        setInterval(function () {
-          try {
-            if (gBLE.connected)
-              gBLE.write(JSON.stringify({ "env": "true" })); // fw 1.0.x allows 2 way coms via BLE json
-          }
-          catch (e) { }
-        }, 10000); // every 10 seconds update the environment (pressure, altitude, etc)
-    */
+    
   </script>
 
   <!-- BLE support -->
