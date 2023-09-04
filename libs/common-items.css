@@ -1,0 +1,139 @@
+
+    * {
+      font-family: Arial, Helvetica, sans-serif
+    }
+
+    html {
+      margin 0;
+      padding: 0;
+      height: 100%;
+      width: 100%;
+      overflow: hidden;
+    }
+
+    body {
+      margin 0;
+      padding: 0;
+      height: 99%;
+      width: 100%;
+      background-color: rgb(8, 17, 31);
+      overflow: hidden
+    }
+
+    .widget {
+      background: #111;
+      border: 1px solid #888;
+      border-radius: 9px !important;
+      color: #fff;
+      height: 98%;
+    }
+
+
+    .status {
+      /*background-image: url("./assets/kinisi-logo-white.png");*/
+      background-size: contain;
+      background-position: 98% 50%;
+      background-repeat: no-repeat;
+      width: 100%;
+      height: 93%;
+      color: white;
+    }
+
+    .statusRow {
+      width: 100%;
+      height: 10vh;
+      padding-top: 1%;
+    }
+
+    .statusInner {
+      padding-top: 10%;
+      padding-bottom: 10%;
+    }
+
+    .defHeight {
+      height: 25vh;
+    }
+
+    /* new 2023-08-30 */
+    .coreRowHeight {
+      height: 60vh;
+    }
+
+    .bonesHeight {
+      height: 100%;
+      padding: 4px;
+    }
+
+    .wheight {
+      height: 100%;
+      padding: 4px;
+    }
+
+
+    .slimChart {
+      height: 33%;
+      padding: 4px;
+    }
+
+    .sepHeight {
+      height: 1vh;
+    }
+
+    .kinisi-logo {
+      padding-left: 0.25rem;
+      height: 5vh;
+    }
+
+    .tagline {
+      vertical-align: middle;
+      padding-bottom: 0.7rem;
+      padding-top: 1.3rem;
+      padding-left: 1rem;
+      font-size: 1.2rem;
+      height: 4vh;
+    }
+
+    .flipHorizontal {
+      -webkit-transform: scaleX(-1);
+      transform: scaleX(-1);
+    }
+
+    .buttonbar {
+      padding-left: 1vw;
+      padding-top: 1rem;
+      padding-bottom: 1rem;
+      padding-right: 1vw;
+      color: #aaa;
+      vertical-align: middle;
+    }
+
+    .infobar {
+      padding-left: 1vw;
+      color: #aaa;
+    }
+
+    img {
+      border-radius: 4px !important;
+    }
+
+    #ahrs {
+      padding: 0.25rem;
+    }
+
+    .sessionText {
+      resize: none;
+      border-radius: 4px !important;
+      color: #222;
+      background-color: #eee;
+      vertical-align: middle;
+    }
+
+    .sessionLabel {
+      color: #ddd;
+      padding-top: 0.3rem;
+      vertical-align: middle;
+    }
+
+    .buttonStuff {
+      float: right;
+    }
