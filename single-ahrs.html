@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>Kinisi K1</title>
+  <!-- 3D support -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/109/three.min.js"></script>
+  <script src="./libs/GLTFLoader.js"></script>
+  <!--<script src="https://unpkg.com/browser-cjs/require.min.js"></script>-->
+
+  <!-- charts -->
+  <script src="./libs/chartjs-4.3.0-umd.js"></script>
+  <script src="./libs/chartjs-helpers.js"></script>
+  <script src="./libs/knee-image-functions.js"></script>
+
+  <!-- html helpers -->
+  <script src="./libs/bitwrench.min.js"></script>
+  <script src="./libs/gaugejs.min.js"></script>
+
+
+  <!-- vectors and math -->
+  <script src="./libs/sensordata.js"></script>
+  <script src="./libs/www-ahrs.js"></script>
+  <!-- <script src="./libs/mc-ahrs.js"></script>
+
+  <!-- lighning icon-->
+  <link
+    href="data:image/x-icon;base64,AAABAAEAEBAQAAEABAAoAQAAFgAAACgAAAAQAAAAIAAAAAEABAAAAAAAgAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAlv//AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAAAAAAAAABAAAAAAAAAAEQAAAAAAAAARAAAAAAAAABEQAAAAAAARERAAAAAAAAERAAAAAAAAAREAAAAAAAABERAAAAAAAAAREAAAAAAAABERAAAAAAAAEREAAAAAAAAAAAAAD9/wAA/f8AAPz/AAD8fwAA/H8AAPw/AAD8PwAA8B8AAPAPAAD4DwAA+D8AAPgfAAD8HwAA/A8AAPwPAAD8DwAA"
+    rel="icon" type="image/x-icon" />
+
+
+  <!-- 3D rendering -->
+  <script src="./libs/3d-functions.js"></script>
+  <script src="./libs/quaternion.min.js"></script>
+
+  <!-- css -->
+  <link rel="stylesheet" type="text/css" href="./libs/common-items.css" />
+  <script async src="https://unpkg.com/es-module-shims@1.8.0/dist/es-module-shims.js"></script>
+
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://unpkg.com/three@0.156.1/build/three.module.js",
+        "three/addons/": "https://unpkg.com/three@0.156.1/examples/jsm/"
+      }
+    }
+  </script>
+</head>
+
+<body>
+  <div id="panel" class="fullPanel bw-container">
+    <div class="bw-row statusRow ">
+      <div class="status">
+        <div class="status-inner">
+          <img class="kinisi-color kinisi-logo" src="./assets/Kinisi-Logo.svg" width="180"></img>
+        </div>
+        <span class="tagline">K1X Portable Motion Lab</span>
+      </div>
+    </div>
+    <div class="bw-row">
+      <div class="bw-col-12 buttonbar">
+        <label class="sessionLabel" for="sessionNameN">Session Name:</label>
+        <textarea id="sessionName" name="sessionNameN" rows="1" cols="20" class="sessionText"></textarea>
+        <label class="sessionLabel" for="sessionHeightN">Height (cm):</label>
+        <textarea id="sessionHeight" name="sessionHeightN" rows="1" cols="8" class="sessionText"></textarea>
+        <label class="sessionLabel" for="sessionWeighttN">Weight (kg):</label>
+        <textarea id="sessionWeight" name="sessionWeighttN" rows="1" cols="8" class="sessionText"></textarea>
+        <button class="buttonStuff" onclick="btnResetDataStorage()">Reset Data</button>
+        <button class="buttonStuff" onclick="btnSaveData()">Export Data</button>
+      </div>
+    </div>
+
+    <div class="bw-row " id="infobarcontainer">
+      <div id="info" class="bw-col-12 infobar">Waiting for Device...</div>
+    </div>
+    <!-- first row -->
+    <div class="bw-row coreRowHeight">
+      <div class="bw-col-3 bonesHeight">
+        <div class="widget"><img id="bonesFront0" style="width:100%;height:100%"></img></div>
+      </div>
+
+      <!-- 
+      <div class="bw-col-3 bonesHeight">
+        <div class="widget"><img id="bonesLateral0" style="width:100%;height:100%"></img></div>
+      </div> -->
+      <div class="bw-col-3 bonesHeight">
+        <div class="widget" id="three-knee-lateral"></div>
+      </div>
+
+      <div class="bw-col-3 bonesHeight">
+        <div class="slimChart"> <canvas class="widget" id="flex0"></canvas></div>
+        <div class="slimChart"> <canvas class="widget" id="rotation0"></canvas></div>
+        <div class="slimChart"> <canvas class="widget" id="tilt0"></canvas></div>
+      </div>
+
+      <div class="bw-col-3 bonesHeight">
+        <div class="slimChart"> <canvas class="widget" id="thigh0"></canvas></div>
+        <div class="slimChart"> <canvas class="widget" id="calf0"></canvas></div>
+        <div class="slimChart"> <canvas class="widget" id="sound0"></canvas></div>
+      </div>
+    </div>
+    <div class="bw-row">
+      <div class="bw-col-12" style="padding-left:0.5%; padding-right: 0.5%;">
+        <div class="widget" id="ahrs" style=" height:100%"></div>
+      </div>
+    </div>
+
+  </div>
+  </div>
+
+  <script type="text/javascript">
+
+    // show data streaming stats
+    if (bw.getURLParam("showstats", "false") == "true") {
+      bw.DOM("#infobarcontainer")[0].style.display = "block";
+    }
+    else {
+      bw.DOM("#infobarcontainer")[0].style.display = "none";
+    }
+    bw.getURLParam("showstats", "true")
+    const maxlen = 120; // chart len in points
+
+    let charts0 = {
+      flex: newChartJSLineChart("#flex0", 1, "Flexion", maxlen, [-20, 150]),
+      rot: newChartJSLineChart("#rotation0", 1, "Rotation", maxlen, [-90, 90]),
+      tilt: newChartJSLineChart("#tilt0", 1, "Tilt", maxlen, [-90, 90]),
+      thigh: newChartJSLineChart("#thigh0", 2, "Thigh Accel + Force", maxlen, [-50, 50], [0, 100]),
+      calf: newChartJSLineChart("#calf0", 2, "Shin  Accel + Force", maxlen, [-50, 50], [0, 100]),
+      sound: newChartJSLineChart("#sound0", 1, "Sound Energy", maxlen, [0, 200]),
+      bonesFront: "#bonesFront0",
+      bonesLateral: "#bonesLateral0"
+    }
+
+    let snAvg = 0;
+    let snDCEnergy = 0;
+
+
+    let thighState = { quat: [1, 0, 0, 0], intFB: [0, 0, 0], RPY: [0, 0, 0] };
+    let calfState = { quat: [1, 0, 0, 0], intFB: [0, 0, 0], RPY: [0, 0, 0] };
+    let ahrs_init = false;
+
+    //update charts
+    /* requires this data structure :
+    data : {
+      flexion : [flexional_angle], // degrees
+      tilt    : [tilt_angle], // degrees
+      rotation: [rotation_angle], // degrees
+      thigh   : [accel, force], // accel in g, force in N
+      calf    : [accel, force], // accel in g, force in N
+      sn      : [sound_energy], // sound energy
+    }
+    use vectorScale to scale vectors to degrees like this:
+      vectorScale(angle_in_radians, 57)
+    */
+
+    let renderCharts = function (charts, data) {
+
+      if ("flexion" in data)
+        charts.flex.updateChart(data["flexion"], true);
+
+      if ("tilt" in data)
+        charts.tilt.updateChart(data["tilt"], true);
+
+      if ("rotation" in data) {
+        charts.rot.updateChart(data["rotation"], true);
+      }
+
+      if ("thigh" in data)
+        charts.thigh.updateChart(data["thigh"], true);
+
+      if ("calf" in data)
+        charts.calf.updateChart(vectorScale(data["calf"], 57), true);
+
+      if ("sn" in data) {
+        let alpha = 0.8;
+        let alphaDC = 0.01;
+        snAvg = snAvg * (1 - alpha) + data["sn"][0] * (alpha);
+        snDCEnergy = snAvg * (1 - alphaDC) + data["sn"][0] * (alphaDC);
+        //let snS = bw.mapScale(gDataStable["sn"],0,15000,0,90);
+        //sn.updateChart([5*Math.log2(gDataStable["sn"])], true);
+        charts.sound.updateChart([10 * Math.log10(snAvg)], true);
+      }
+
+      renderKneeBonesAngle(charts.bonesFront, data.flexion[0], "front", "right")
+      renderKneeBonesAngle(charts.bonesLateral, data.flexion[0], "lateral", "right")
+
+    } // end of renderCharts
+
+    let renderInfoArea = function (data) {
+      // stats area refresh
+      let i, info = "";
+      for (i in data.packetInfo) {
+        let k = i, v = data.packetInfo[i];
+        info += k + ": " + v.toFixed(2) + "&nbsp;&nbsp;";
+      }
+      document.getElementById("info").innerHTML = info;
+    }
+    const AHRS = require('ahrs');
+    const thighMahony = new AHRS({
+      /*
+        * The sample interval, in Hz.
+        *
+        * Default: 20
+        */
+      sampleInterval: 20,
+
+      /*
+        * Choose from the `Madgwick` or `Mahony` filter.
+        *
+        * Default: 'Madgwick'
+        */
+      algorithm: 'Mahony',
+
+      /*
+        * The filter noise value, smaller values have
+        * smoother estimates, but have higher latency.
+        * This only works for the `Madgwick` filter.
+        *
+        * Default: 0.4
+        */
+      beta: 0.0,
+
+      /*
+        * The filter noise values for the `Mahony` filter.
+        */
+      kp: 10, // Default: 0.5
+      ki: 3, // Default: 0.0
+
+      /*
+        * When the AHRS algorithm runs for the first time and this value is
+        * set to true, then initialisation is done.
+        *
+        * Default: false
+        */
+      doInitialisation: true,
+
+    });
+
+    const calfMahony = new AHRS({
+      /*
+        * The sample interval, in Hz.
+        *
+        * Default: 20
+        */
+      sampleInterval: 20,
+
+      /*
+        * Choose from the `Madgwick` or `Mahony` filter.
+        *
+        * Default: 'Madgwick'
+        */
+      algorithm: 'Mahony',
+
+      /*
+        * The filter noise value, smaller values have
+        * smoother estimates, but have higher latency.
+        * This only works for the `Madgwick` filter.
+        *
+        * Default: 0.4
+        */
+      beta: 0.0,
+
+      /*
+        * The filter noise values for the `Mahony` filter.
+        */
+      kp: 10, // Default: 0.5
+      ki: 3, // Default: 0.0
+
+      /*
+        * When the AHRS algorithm runs for the first time and this value is
+        * set to true, then initialisation is done.
+        *
+        * Default: false
+        */
+      doInitialisation: true,
+    });
+
+   let firstCalf = true;
+   let firstThigh = true;
+
+    let calfQuat = [0, 0, 0, 1];
+    let thighQuat = [0, 0, 0, 1];
+
+    let [xMin, yMin, zMin] = [ Infinity, Infinity, Infinity ];
+    let [xMax, yMax, zMax] = [ -Infinity, -Infinity, -Infinity ];
+
+    let [xMin0, yMin0, zMin0] = [ Infinity, Infinity, Infinity ];
+    let [xMax0, yMax0, zMax0] = [ -Infinity, -Infinity, -Infinity ];
+
+   let angle = 0;
+   let dir = 1.;
+
+    setInterval(
+      () => {
+        let thigh = bw.mapScale(Math.sin(Date.now() / 1000), -1, 1, -30, 150);
+        let calf = bw.mapScale(Math.sin(Date.now() / 1000), -1, 1, -30, 150);
+
+
+        let thighRPY = [0, 0, 0];
+        let calfRPY = [0, 0, 0];
+
+        var gd = gDataStable;
+
+        //console.log("IMU 0", gd.g0, gd.a0, gd.m0);
+        //console.log("IMU 1", gd.g1, gd.a1, gd.m1);
+
+        if (gd.g0 && gd.a0 && gd.m0) {
+
+          /*
+          gd.m0[0] -= -478.92;
+          gd.m0[1] -= -17.064;
+          gd.m0[2] -= 1.215;
+          xMin = Math.min(gd.m0[0], xMin);
+          yMin = Math.min(gd.m0[1], yMin);
+          zMin = Math.min(gd.m0[2], zMin);
+          xMax = Math.max(gd.m0[0], xMax);
+          yMax = Math.max(gd.m0[1], yMax);
+          zMax = Math.max(gd.m0[2], zMax);
+          */
+
+          if (firstThigh) {
+            thighMahony.update(...gd.g0, ...gd.a0, ...gd.m0);
+            firstThigh = false;
+          }
+          else thighMahony.update(...gd.g0, ...gd.a0);//, ...gd.m0);
+
+          let q = thighMahony.getQuaternion();
+          thighQuat = [q.x, q.y, q.z, q.w];
+        }
+
+        if (gd.g1 && gd.a1 && gd.m1) {
+          /*
+          gd.m1[0] -= 0;
+          gd.m1[1] -= 0;
+          gd.m0[2] -= 0;
+          xMin0 = Math.min(gd.m1[0], xMin0);
+          yMin0 = Math.min(gd.m1[1], yMin0);
+          zMin0 = Math.min(gd.m1[2], zMin0);
+          xMax0 = Math.max(gd.m1[0], xMax0);
+          yMax0 = Math.max(gd.m1[1], yMax0);
+          zMax0 = Math.max(gd.m1[2], zMax0);
+          */
+
+          if (firstCalf) {
+            calfMahony.update(...gd.g1, ...gd.a1, ...gd.m1);
+            firstCalf = false;
+          } else calfMahony.update(...gd.g1, ...gd.a1)//;, ...gd.m1);
+          let q = calfMahony.getQuaternion();
+          calfQuat = [q.x, q.y, q.z, q.w];
+        }
+
+        if (angle <= 0) {
+          dir = 1.;
+        } else if (angle >= 3 * Math.PI / 8){
+          dir = -1;
+        }
+        angle += dir * Math.PI / 400.;
+        //thighQuat = [0, 0, 0, 1];
+        //calfQuat = [0, -Math.sin(angle), 0, Math.cos(angle)];
+
+        let angleQuat = new Quaternion(thighQuat[3], thighQuat.slice(0, 3)).inverse()
+                  .mul(new Quaternion(calfQuat[3], calfQuat.slice(0, 3)));
+
+        let [tilt, rotation, flexion] = angleQuat.toEuler(order='ZXY');
+
+
+        //console.log("Mag Cal", (xMin + xMax) / 2, (yMin + yMax) / 2, (zMin + zMax) / 2);
+        //console.log("Mag Cal0", (xMin0 + xMax0) / 2, (yMin0 + yMax0) / 2, (zMin0 + zMax0) / 2);
+
+
+
+        //window.thighQuat = [thighQuat[1], thighQuat[2], thighQuat[3], thighQuat[0]];
+        window.thighQuat = [0, 0, 0, 1];
+        window.calfQuat = [angleQuat.x, angleQuat.y, angleQuat.z, angleQuat.w];
+
+        let data = {
+          flexion: [-flexion * 180 / Math.PI],
+          tilt: [tilt * 180 / Math.PI],
+          rotation: [rotation * 180 / Math.PI],
+          thigh: [thigh, thigh * 15], // sim accel, accl* simulated thigh weight
+          calf: [calf, calf * 9], // sim accel, accel *  simulated calf weight
+          sn: [100 + 100 * Math.sin(Date.now() / 100)], // simulated sound energy
+        }
+        renderCharts(charts0, data)
+      }
+      , 50);
+
+
+  </script>
+  <!-- BLE support -->
+  <script src="./libs/uart.js"></script>
+  <script src="./libs/k1-btdata.js"></script>
+  <script type="module" src="/main.js"></script>
+</body>
+
+</html>
