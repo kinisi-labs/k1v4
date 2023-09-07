@@ -1,0 +1,22 @@
+{ 
+    "description" : "body mass as percent of total weight.",
+    "Male" : {
+        "thigh" : 11.8,
+        "calf" : 4.0,
+        "foot" : 1.5,
+        "total" : 17.8
+    },
+    "Female" : {
+        "thigh" : 12.4,
+        "calf" : 4.9,
+        "foot" : 1.4,
+        "total" : 18.8
+    },
+    "Generic" : {
+        "thigh" : 12.1,
+        "calf" : 4.7,
+        "foot" : 1.5,
+        "total" : 18.3
+
+    }
+}
