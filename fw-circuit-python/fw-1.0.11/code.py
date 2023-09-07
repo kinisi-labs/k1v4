@@ -75,7 +75,7 @@ import _bleio
 import adafruit_hashlib
 import digitalio
 
-version = "1.0.12 (cp8)"
+version = "1.0.13 (cp8)"
 # incoming data
 recvdata = ""   # rec data buffer from host
 en_recvd = True # enable receive data from host
@@ -167,6 +167,8 @@ try:
         print('ICM2 not connected', e, file=sys.stderr)
         icm2 = None
 
+    lsm6ds33_2 = None
+    lis3mdl_2 = None
 
     apds9960 = adafruit_apds9960.apds9960.APDS9960(i2c)
     bmp280 = adafruit_bmp280.Adafruit_BMP280_I2C(i2c)
@@ -291,20 +293,35 @@ try:
         s["a0"]   = rnd_vec(lsm6ds33.acceleration,2)
         s["g0"]   = rnd_vec(lsm6ds33.gyro,2)
 
-        if icm2 is None:
-            s["m1"]   = [0., 0., 0.]
-            s["a1"]   = [0., 0., 0.]
-            s["g1"]   = [0., 0., 0.]
+        if icm2 is None and (lis3mdl_2 is None or lsm6ds33_2 is None):
+            s["m1"]   = None
+            s["a1"]   = None
+            s["g1"]   = None
             if ix % 100 == 0:
                 try:
                     icm2 = adafruit_icm20x_mod.ICM20948(i2c)
                 except Exception as e:
                     print('ICM2 not connected', e, file=sys.stderr)
                     icm2 = None
+
+                try:
+                    lsm6ds33_2 = adafruit_lsm6ds.lsm6ds33.LSM6DS33(i2c,0x6B)
+                    lis3mdl_2 = adafruit_lis3mdl.LIS3MDL(i2c,0x1E)
+                except Exception as e:
+                    print('LSM6 or LIS3 not connected', e, file=sys.stderr)
+                    lsm6ds33_2 = None
+                    lis3mdl_2 = None
+
+        elif icm2 is None:
+            s["m1"] = rnd_vec(lis3mdl_2.magnetic, 2)
+            s["a1"] = rnd_vec(lsm6ds33_2.acceleration, 2)
+            s["g1"] = rnd_vec(lsm6ds33_2.gyro, 2)
         else:
             s["m1"]   = rnd_vec(icm2.magnetic,2)
             s["a1"]   = rnd_vec(icm2.acceleration,2)
             s["g1"]   = rnd_vec(icm2.gyro,2)
+
+        s["t_s"] = time.monotonic(); # transmit timestamp
 
         s["tch"] = touch_sensor.value
 
@@ -322,7 +339,6 @@ try:
             time.sleep(0.5)
             pass
 
-        #s["tx"] = time.monotonic_ns() # transmit timestamp
         if ble.connected:
             if not iscon:
                 print("Connected")
