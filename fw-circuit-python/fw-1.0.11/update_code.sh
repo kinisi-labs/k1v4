@@ -1,5 +1,7 @@
 #!/bin/bash
 
+[[ -z "$KINISI_RSYNC" ]] && KINISI_RSYNC=false
+
 function wait_for_confirm() {
     while true; do
         read -p "$1 [Yn]: " yn
@@ -50,7 +52,7 @@ function update_bootloader() {
 
 function update_runtime() {
     while true; do
-        if [[ -d "$KINISI_MOUNT_LOCATION/FTHRSNSBOOT" ]]; then
+        if [[ -e "$KINISI_MOUNT_LOCATION/FTHRSNSBOOT" && ! -f "$KINISI_MOUNT_LOCATION/CIRCUITPY" ]]; then
             break
         else
             echo "Unable able to find drive in $KINISI_MOUNT_LOCATION. Files:"
@@ -68,7 +70,7 @@ function update_code() {
 
     wait_for_confirm "Feather mounted and in safemode?"
     while true; do
-        if [[ -d "$KINISI_MOUNT_LOCATION/CIRCUITPY" ]]; then
+        if [[ -e "$KINISI_MOUNT_LOCATION/CIRCUITPY" && ! -f "$KINISI_MOUNT_LOCATION/CIRCUITPY" ]]; then
             break
         else
             echo "Unable able to find drive in $KINISI_MOUNT_LOCATION. Files:"
@@ -80,7 +82,7 @@ function update_code() {
         fi
     done
 
-    if command -v rsync > /dev/null 2>&1; then
+    if command -v rsync > /dev/null 2>&1 && [[ $KINISI_RSYNC == "true" ]]; then
         rsync -ric --delete "./lib/" "$KINISI_MOUNT_LOCATION/CIRCUITPY/lib"
     else
         rm -rf "$KINISI_MOUNT_LOCATION/CIRCUITPY/lib"

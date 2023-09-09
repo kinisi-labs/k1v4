@@ -75,7 +75,7 @@ import _bleio
 import adafruit_hashlib
 import digitalio
 
-version = "1.0.13 (cp8)"
+version = "1.0.14 (cp8)"
 # incoming data
 recvdata = ""   # rec data buffer from host
 en_recvd = True # enable receive data from host
@@ -93,7 +93,7 @@ print (get_ble_name() + " running firmware: " + version)
 
 def read_gps(s, last_print, debug_print):
     # Every second print out current location details if there's a fix.
-    current = time.monotonic()
+    current = s["t_s"]
     if current - last_print >= 1.0:
         gps.update()
         last_print = current
@@ -176,7 +176,7 @@ try:
     microphone = audiobusio.PDMIn(board.MICROPHONE_CLOCK, board.MICROPHONE_DATA, sample_rate=16000, bit_depth=16)
 
     touch_sensor = digitalio.DigitalInOut(board.D13)
-    touch_sensor.switch_to_input(digitalio.Pull.DOWN)
+    touch_sensor.switch_to_input(digitalio.Pull.DOWN);
 
     uart_gps = busio.UART(board.TX, board.RX, baudrate=9600, timeout=10)
 
