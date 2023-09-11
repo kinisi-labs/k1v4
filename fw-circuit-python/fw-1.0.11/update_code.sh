@@ -51,6 +51,7 @@ function update_bootloader() {
 }
 
 function update_runtime() {
+    wait_for_confirm "Device reboot and light is green"
     while true; do
         if [[ -e "$KINISI_MOUNT_LOCATION/FTHRSNSBOOT" && ! -f "$KINISI_MOUNT_LOCATION/CIRCUITPY" ]]; then
             break
@@ -63,7 +64,7 @@ function update_runtime() {
             wait_for_confirm "Feather ready (light is green)?"
         fi
     done
-    cp ./adafruit-circuitpython-feather_bluefruit_sense-en_US-8.2.3.uf2 -t "$KINISI_MOUNT_LOCATION/FTHRSNSBOOT"
+    cp ./adafruit-circuitpython-feather_bluefruit_sense-en_US-8.2.3.uf2 "$KINISI_MOUNT_LOCATION/FTHRSNSBOOT"
 }
 
 function update_code() {
@@ -88,7 +89,8 @@ function update_code() {
         rm -rf "$KINISI_MOUNT_LOCATION/CIRCUITPY/lib"
         cp -r lib "$KINISI_MOUNT_LOCATION/CIRCUITPY/"
     fi
-    cp code.py safemode.py -t "$KINISI_MOUNT_LOCATION/CIRCUITPY/"
+    cp safemode.py "$KINISI_MOUNT_LOCATION/CIRCUITPY/"
+    cp code.py "$KINISI_MOUNT_LOCATION/CIRCUITPY/"
 }
 
 set -e
@@ -122,18 +124,16 @@ esac
 echo "Mount location: $KINISI_MOUNT_LOCATION"
 
 if [[ "$IS_BOOTLOADER" == true ]]; then
-    ACTIONS=("bootloader" "runtime" "code")
+    ACTIONS=("bootloader")
 elif [[ "$IS_RUNTIME" == true ]]; then
-    ACTIONS=("runtime" "code")
+    ACTIONS=("runtime")
 else
     while true; do
         POSSIBLE_DRIVES=("$KINISI_MOUNT_LOCATION"/*)
-        if array_contains_element "$KINISI_MOUNT_LOCATION/FTHRSNSBOOT" \
-                "${POSSIBLE_DRIVES[@]}"; then
+        if [[ -e "$KINISI_MOUNT_LOCATION/FTHRSNSBOOT" ]]; then
             ACTIONS=("runtime" "code")
             break
-        elif array_contains_element "$KINISI_MOUNT_LOCATION/CIRCUITPY" \
-                "${POSSIBLE_DRIVES[@]}"; then
+        elif [[ -e "$KINISI_MOUNT_LOCATION/CIRCUITPY" ]]; then
             ACTIONS=("code")
             break
         else
