@@ -25,6 +25,7 @@ import board
 import busio
 from board import *
 import supervisor
+import microcontroller
 import json
 import traceback
 
@@ -75,7 +76,7 @@ import _bleio
 import adafruit_hashlib
 import digitalio
 
-version = "1.0.14 (cp8)"
+version = "1.0.15 (cp7)"
 # incoming data
 recvdata = ""   # rec data buffer from host
 en_recvd = True # enable receive data from host
@@ -366,17 +367,15 @@ try:
                 uart.write("?>"+json.dumps(s,separators=(',', ':'))+"<?") # encode data with packet delims TODO: improve
                 wdog.feed()
             except Exception as e:
-                print("err ble.connect" )
-                traceback.print_exception(e)
-                supervisor.reload() # reboot if exception
+                print("err ble.connect", e)
+                microcontroller.reset() # reboot if exception
         else:
             print('BLE disconnected')
             iscon=False
 
 except Exception as e:
     print("err main" , e)
-    traceback.print_exception(e)
-    supervisor.reload() #reboot if exceptions
+    microcontroller.reset() #reboot if exceptions
 
 # debug sensor packet to serial
 def printDebugSensorPacket(s):

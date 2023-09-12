@@ -1,6 +1,7 @@
 #!/bin/bash
 
 [[ -z "$KINISI_RSYNC" ]] && KINISI_RSYNC=false
+[[ -z "$KINISI_CPY_VERSION" ]] && KINISI_CPY_VERSION=7
 
 function wait_for_confirm() {
     while true; do
@@ -64,7 +65,11 @@ function update_runtime() {
             wait_for_confirm "Feather ready (light is green)?"
         fi
     done
-    cp ./adafruit-circuitpython-feather_bluefruit_sense-en_US-8.2.3.uf2 "$KINISI_MOUNT_LOCATION/FTHRSNSBOOT"
+    if [[ $KINISI_CPY_VERSION = 7 ]]; then
+        cp ../CircuitPython7/adafruit-circuitpython-feather_bluefruit_sense-en_US-7.2.4.uf2 "$KINISI_MOUNT_LOCATION/FTHRSNSBOOT"
+    else
+        cp ./adafruit-circuitpython-feather_bluefruit_sense-en_US-8.2.3.uf2 "$KINISI_MOUNT_LOCATION/FTHRSNSBOOT"
+    fi
 }
 
 function update_code() {
@@ -83,11 +88,17 @@ function update_code() {
         fi
     done
 
+    if [[ "$KINISI_CPY_VERSION" == 7 ]]; then
+        LIB_FOLDER=./lib/
+    else
+        LIB_FOLDER=./lib7/
+    fi
+
     if command -v rsync > /dev/null 2>&1 && [[ $KINISI_RSYNC == "true" ]]; then
-        rsync -ric --delete "./lib/" "$KINISI_MOUNT_LOCATION/CIRCUITPY/lib"
+        rsync -ric --delete "$LIB_FOLDER" "$KINISI_MOUNT_LOCATION/CIRCUITPY/lib"
     else
         rm -rf "$KINISI_MOUNT_LOCATION/CIRCUITPY/lib"
-        cp -r lib "$KINISI_MOUNT_LOCATION/CIRCUITPY/"
+        cp -r "$LIB_FOLDER" "$KINISI_MOUNT_LOCATION/CIRCUITPY/lib"
     fi
     cp safemode.py "$KINISI_MOUNT_LOCATION/CIRCUITPY/"
     cp code.py "$KINISI_MOUNT_LOCATION/CIRCUITPY/"
@@ -105,6 +116,7 @@ while true; do
     case "$1" in
         -b | --bootloader ) IS_BOOTLOADER=true;;
         -r | --runtime ) IS_RUNTIME=true;;
+        -a | --all ) IS_ALL=true;;
         -* | --* ) echo "Invalid option $1"; exit 1;;
         * ) echo "Invalid position argument $1"; exit 1;;
     esac
@@ -121,29 +133,30 @@ case "$(uname)" in
     * ) echo "Unsupported OS: $(uname)"; exit 1;;
 esac
 
+if [[ "$KINISI_WSL" == true ]]; then
+    [[ -z "$KINISI_MOUNT_LOCATION" ]] && KINISI_MOUNT_LOCATION="/mnt"
+    [[ -z "$KINISI_SERIAL_PORT_PREFIX" ]] && KINISI_SERIAL_PORT_PREFIX="/dev/ttyACM0"
+fi
+
+function mount_wsl() {
+    if [[ "$KINISI_WSL" == true ]]; then
+        if [[ ! -e "$1" ]]; then
+            mkdir "$1"
+        fi
+        sudo mount -t drvfs D: "$1"
+    fi
+}
+
 echo "Mount location: $KINISI_MOUNT_LOCATION"
 
 if [[ "$IS_BOOTLOADER" == true ]]; then
     ACTIONS=("bootloader")
 elif [[ "$IS_RUNTIME" == true ]]; then
     ACTIONS=("runtime")
+elif [[ "$IS_ALL" == true ]]; then
+    ACTIONS=("bootloader" "runtime" "code")
 else
-    while true; do
-        POSSIBLE_DRIVES=("$KINISI_MOUNT_LOCATION"/*)
-        if [[ -e "$KINISI_MOUNT_LOCATION/FTHRSNSBOOT" ]]; then
-            ACTIONS=("runtime" "code")
-            break
-        elif [[ -e "$KINISI_MOUNT_LOCATION/CIRCUITPY" ]]; then
-            ACTIONS=("code")
-            break
-        else
-            echo "Unable to find mounted device"
-            for file in "${POSSIBLE_DRIVES[@]}"; do
-                echo "    $file"
-            done
-            wait_for_confirm "Device mounted?"
-        fi
-    done
+    ACTIONS=("code")
 fi
 
 for action in "${ACTIONS[@]}"; do
