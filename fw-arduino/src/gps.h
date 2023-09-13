@@ -12,6 +12,7 @@ struct GpsData {
   float g_tra;
   char timestamp[32];
   bool valid;
+  bool fix_valid;
 };
 
 void addGpsDataToJson(JsonDocument & s, GpsData & data) {
@@ -24,11 +25,12 @@ void addGpsDataToJson(JsonDocument & s, GpsData & data) {
         s["g_spd"] = data.g_spd;
         s["g_tra"] = data.g_tra;
         s["g_tsm"] = data.timestamp;
+    } else if (data.fix_valid) {
+        s["g_fix"] = data.fix_valid;
     }
 }
 
 void readGps(Adafruit_GPS & gps, GpsData & data, bool debugPrint) {
-  gps.read();
 
   if (gps.newNMEAreceived()) {
     gps.parse(gps.lastNMEA());
@@ -44,6 +46,7 @@ void readGps(Adafruit_GPS & gps, GpsData & data, bool debugPrint) {
       data.g_spd = gps.speed;
       data.g_tra = gps.angle;
       data.valid = true;
+      data.fix_valid = true;
       // The remaining attributes you mentioned aren't standard in Adafruit_gps. They would require custom handling.
 
       char timestamp[32];
@@ -63,9 +66,15 @@ void readGps(Adafruit_GPS & gps, GpsData & data, bool debugPrint) {
         Serial.print("Track angle: "); Serial.println(data.g_tra);
         // Print additional attributes if they are available in your gps library.
       }
-    } else if (debugPrint) {
-        Serial.printf("Waiting for fix.... Quality: %d", gps.fixquality);
+    } else {
+        if (debugPrint) {
+            Serial.printf("Waiting for fix.... Quality: %d\n", gps.fixquality);
+        }
+        data.fix_valid = true;
+        data.g_fix = gps.fixquality;
     }
+  } else if (debugPrint) {
+      Serial.println("No new NMEA received");
   }
 }
 
