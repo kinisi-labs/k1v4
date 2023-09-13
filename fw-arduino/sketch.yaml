@@ -1,0 +1,25 @@
+profiles:
+  kinisi-k1x:
+    notes: Firmware for Kinisi v1 sleeves
+    fqbn: adafruit:nrf52:feather52840sense
+    platforms:
+      - platform: adafruit:nrf52 (1.5.0)
+        platform_index_url: https://adafruit.github.io/arduino-board-index/package_adafruit_index.json
+    libraries:
+      - Wire (1.0)
+      - Adafruit LSM6DS (4.7.0)
+      - Adafruit BusIO (1.14.3)
+      - SPI (1.0)
+      - Adafruit Unified Sensor (1.1.12)
+      - Adafruit ICM20X (2.0.5)
+      - Adafruit APDS9960 Library (1.2.3)
+      - Adafruit BMP280 Library (2.6.8)
+      - Adafruit LIS3MDL (1.2.1)
+      - Adafruit SHT31 Library (2.2.2)
+      - Adafruit GPS Library (1.7.4)
+      - Adafruit Tiny USB (2.0.1)
+      - ArduinoJson (6.21.3)
+      - Adafruit Bluefruit nRF52 Libraries (0.21.0)
+      - Adafruit nRFCrypto (0.0.7)
+      - Adafruit Little File System Libraries (0.11.0)
+      - Adafruit Internal File System on Bluefruit nRF52 (0.11.0)

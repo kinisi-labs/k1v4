@@ -14,6 +14,10 @@
 #include <bluefruit.h>
 #include <Adafruit_LittleFS.h>
 #include <InternalFileSystem.h>
+#include <cstring>
+#include <cstdlib>
+#include "md5.h"
+#include "nrf51_to_nrf52840.h"
 
 // callback invoked when central connects
 static void connect_callback(uint16_t conn_handle)
@@ -50,6 +54,33 @@ class BleUart {
     BLEUart bleuart; // uart over ble
     BLEBas  blebas;  // battery
 
+    char name_buf[32] = "kinisi-labs-k1x-";
+    char full_id[33];
+
+    void getMacAddress(uint8_t * mac_address) {
+        uint32_t upper_mac = NRF_FICR->DEVICEADDR[1];
+        uint32_t lower_mac = NRF_FICR->DEVICEADDR[0];
+        mac_address[0] = (upper_mac >> 8) & 0xFF;
+        mac_address[1] = upper_mac & 0xFF;
+        mac_address[2] = (lower_mac >> 24) & 0xFF;
+        mac_address[3] = (lower_mac > 16) & 0xFF;
+        mac_address[4] = (lower_mac >> 8) & 0xFF;
+        mac_address[5] = lower_mac & 0xFF;
+    }
+
+    void initializeFullId() {
+        uint8_t mac_address[6];
+        uint8_t md5_hash[16];
+        getMacAddress(mac_address);
+        md5Buffer(mac_address, 6, md5_hash);
+        md5StringDigest(md5_hash, full_id);
+    }
+
+    void getShortId(char * buf) {
+        strncpy(buf, full_id + 26, 7);
+        buf[6] = '\0';
+    }
+
     void startAdv(void)
     {
         // Advertising packet
@@ -83,16 +114,6 @@ class BleUart {
 
     void setup()
     {
-        Serial.begin(115200);
-
-#if CFG_DEBUG
-        // Blocking wait for connection when debug mode is enabled via IDE
-        while ( !Serial ) yield();
-#endif
-  
-        Serial.println("Bluefruit52 BLEUART Example");
-        Serial.println("---------------------------\n");
-
         // Setup the BLE LED to be enabled on CONNECT
         // Note: This is actually the default behavior, but provided
         // here in case you want to control this LED manually via PIN 19
@@ -105,7 +126,12 @@ class BleUart {
 
         Bluefruit.begin();
         Bluefruit.setTxPower(4);    // Check bluefruit.h for supported values
-        Bluefruit.setName("kinisi-labs-k1x");
+
+        initializeFullId();
+        int len = strnlen(name_buf, 32);
+        getShortId(name_buf + len);
+
+        Bluefruit.setName(name_buf);
         //Bluefruit.setName(getMcuUniqueID()); // useful testing with multiple central connections
         Bluefruit.Periph.setConnectCallback(connect_callback);
         Bluefruit.Periph.setDisconnectCallback(disconnect_callback);
@@ -135,13 +161,15 @@ class BleUart {
 
     void write(uint8_t * buf, size_t len)
     {
+        // TODO: remove this hacky stuff by changing frontend
         char temp[256];
-        for (int i = 0; i < len; i += 224) {
-          int cnt = len - i < 224 ? len - i : 224;
-          memcpy(temp, buf + i, cnt);
-          bleuart.write( temp, cnt);
+        int max_len = 224;
+        for (int i = 0, cnt = 0; i < len; i += cnt) {
+            cnt = len - i < max_len ? len - i : max_len;
+            memcpy(temp, buf + i, cnt);
+            bleuart.write( temp, cnt);
         }
-        
+
     }
 
     void read(uint8_t * buf, size_t len) {
