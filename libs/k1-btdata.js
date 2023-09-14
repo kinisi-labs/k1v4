@@ -130,17 +130,21 @@ var gBLEcallback = function (d) {
 var asmPacket = function (s, accum) {
     s = bw.toa(s, "string", s, "");
     accum = bw.toa(accum, "string", accum, "");
-    var i = s.indexOf("?>"); //start prefix found
-    if (i >= 0)
-        accum = s.substr(i + 2);
-    else {// not begin
-        i = s.indexOf("<?"); //end suffix found
-        if (i >= 0) // end found
-            accum += s.substr(0, i);
-        else // middle...
-            accum += s;
+    console.log("msg", s);
+
+    accum += s;
+
+    let i = accum.indexOf("?>");
+    if (i >= 0) {
+        accum = accum.substr(i);
+        i = accum.indexOf("<?");
+
+        if (i >= 0) {
+            accum = accum.substr(2, i - 2);
+        }
     }
-    return accum; //raw packet decode
+
+    return accum;
 }
 
 function btnGetInfo() {

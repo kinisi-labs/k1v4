@@ -269,6 +269,9 @@
       return Number(a);
     }
    function getV1SleeveDataTransformFunction() {
+     // how fast should rotation/flexion trend toward 0
+     let slerpPctPerSec = 0.3;
+
      let kp = 2;
      let ki = 0.05;
      AHRS = require("ahrs");
@@ -305,6 +308,8 @@
      let magFreq = 1;
      let thighQuat = [0, 0, 0, 1];
      let calfQuat = [0, 0, 0, 1];
+     let thighQuat2 = new Quaternion(1, 0, 0, 0);
+     let calfQuat2 = thighQuat2;
 
      let calfRot = Quaternion.fromEulerLogical(Math.PI, Math.PI / 2, 0, 'XZY');
 
@@ -373,10 +378,15 @@
          .inverse()
          .mul(new Quaternion(calfQuat[3], calfQuat.slice(0, 3)));
 
-       let [tilt, rotation, flexion] = vectorScale(
+       let [tilt, rotation, flexion] = angleQuat.toEuler("ZXY");
+       let slerpPct = slerpPctPerSec * dt;
+       slerpPct = Math.max(0, Math.min(1, slerpPct));
+       angleQuat = angleQuat.slerp(Quaternion.fromEulerLogical(0, 0, flexion, "ZXY"))(slerpPct);
+       [tilt, rotation, flexion] = vectorScale(
          angleQuat.toEuler("ZXY"),
-         180 / Math.PI,
+         180 / Math.PI
        );
+       flexion = -flexion;
        intervalCnt += 1;
        let thighAccel = vectorMag(gd.a0);
        let calfAccel = vectorMag(gd.a1);
@@ -413,7 +423,7 @@
 
     let a0 = newChartJSLineChart("#a0", 3, "Thigh Accel", maxlen, [-20, 20]);
     let g0 = newChartJSLineChart("#g0", 3, "Thigh Gyro", maxlen, [-500, 500]);
-    let m0 = newChartJSLineChart("#m0", 3, "Thigh Mags", maxlen, [-500, 500]);
+    let m0 = newChartJSLineChart("#m0", 3, "Thigh Mags", maxlen, [-1000, 1000]);
 
     let a1 = newChartJSLineChart("#a1", 3, "Calf Accel", maxlen, [-20, 20]);
     let g1 = newChartJSLineChart("#g1", 3, "Calf Gyro", maxlen, [-500, 500]);
@@ -449,8 +459,8 @@
     //update renderings
     setInterval(function () {
 
-
       var gd = gDataStable;
+      console.log(gd);
 
       if ("a0" in gDataStable) {
           let transformed = transformFunction(gd);
