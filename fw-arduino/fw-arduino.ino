@@ -36,7 +36,7 @@ char uart_buf[1024];
 GpsData gps_data;
 StaticJsonDocument<2048> s;
 const int TOUCH_SENSOR_PIN = 13;
-const char * version = "1.1.2";
+const char * version = "1.1.3";
 long packetCnt = 0;
 
 bool readImusAndSerializeFunc(void *) {
@@ -118,7 +118,7 @@ void setup() {
 
   ble_uart.setup();
 
-  timer.every(20, readImusAndSerializeFunc);
+  timer.every(25, readImusAndSerializeFunc);
   timer.every(1000, readGpsFunc);
   gps_data.valid = false;
   gps_data.fix_valid = false;
