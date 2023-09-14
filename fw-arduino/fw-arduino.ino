@@ -36,13 +36,20 @@ char uart_buf[1024];
 GpsData gps_data;
 StaticJsonDocument<2048> s;
 const int TOUCH_SENSOR_PIN = 13;
-const char * version = "1.1.1";
+const char * version = "1.1.2";
 long packetCnt = 0;
 
 bool readImusAndSerializeFunc(void *) {
-  s["v"] = version;
   s["i"] = packetCnt;
-  packetCnt++;
+
+  if (packetCnt & 0x1FF == 0) {
+    char buf[33];
+    s["v"] = version;
+    ble_uart.getShortId(buf);
+    s["sid"] = buf;
+    ble_uart.getFullId(buf);
+    s["fid"] = buf;
+  }
 
   s["t_s"] = millis();
 
@@ -64,6 +71,7 @@ bool readImusAndSerializeFunc(void *) {
   s.clear();
 
   ble_uart.write((uint8_t *) uart_buf, strnlen(uart_buf, sizeof(uart_buf)));
+  packetCnt++;
   return true;
 }
 

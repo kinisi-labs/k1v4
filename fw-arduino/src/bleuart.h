@@ -17,8 +17,8 @@
 #include <InternalFileSystem.h>
 #include <cstring>
 #include <cstdlib>
+#include <utility/utilities.h>
 #include "md5.h"
-#include "nrf51_to_nrf52840.h"
 
 // callback invoked when central connects
 static void connect_callback(uint16_t conn_handle)
@@ -58,28 +58,11 @@ class BleUart {
     char name_buf[32] = "kinisi-labs-k1x-";
     char full_id[33];
 
-    void getMacAddress(uint8_t * mac_address) {
-        uint32_t upper_mac = NRF_FICR->DEVICEADDR[1];
-        uint32_t lower_mac = NRF_FICR->DEVICEADDR[0];
-        mac_address[0] = (upper_mac >> 8) & 0xFF;
-        mac_address[1] = upper_mac & 0xFF;
-        mac_address[2] = (lower_mac >> 24) & 0xFF;
-        mac_address[3] = (lower_mac > 16) & 0xFF;
-        mac_address[4] = (lower_mac >> 8) & 0xFF;
-        mac_address[5] = lower_mac & 0xFF;
-    }
-
+  
     void initializeFullId() {
-        uint8_t mac_address[6];
         uint8_t md5_hash[16];
-        getMacAddress(mac_address);
-        md5Buffer(mac_address, 6, md5_hash);
+        md5Buffer((uint8_t *) getMcuUniqueID(), 16, md5_hash);
         md5StringDigest(md5_hash, full_id);
-    }
-
-    void getShortId(char * buf) {
-        strncpy(buf, full_id + 26, 7);
-        buf[6] = '\0';
     }
 
     void startAdv(void)
@@ -159,6 +142,15 @@ class BleUart {
         Serial.println("Once connected, enter character(s) that you wish to send");
     }
 
+    void getShortId(char * buf) {
+        strncpy(buf, full_id + 26, 7);
+        buf[6] = '\0';
+    }
+
+    void getFullId(char * buf) {
+        strncpy(buf, full_id, 33);
+        buf[32] = '\0';
+    }
 
     void write(uint8_t * buf, size_t len)
     {
