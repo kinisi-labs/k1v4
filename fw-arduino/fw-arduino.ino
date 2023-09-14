@@ -1,3 +1,4 @@
+#include <Arduino.h>
 #include <Adafruit_APDS9960.h>
 #include <Adafruit_BMP280.h>
 #include <Adafruit_SHT31.h>
@@ -6,14 +7,18 @@
 #include <ArduinoJson.h>
 #include <cstring>
 
+
 #include "src/bleuart.h"
 #include "src/gps.h"
 #include "src/imu.h"
 #include "src/arduino-timer/src/arduino-timer.h"
+#include "src/sound.h"
+
 
 Timer<4, millis> timer;
 
 KinisiImu kinisi_imu;
+KinisiSound kinisi_sound;
 
 //Adafruit_APDS9960 apds9960;
 
@@ -42,6 +47,7 @@ bool readImusAndSerializeFunc(void *) {
   s["t_s"] = millis();
 
   kinisi_imu.loop(s);
+  kinisi_sound.loop(s);
 
   bool touch = digitalRead(TOUCH_SENSOR_PIN);
   s["tch"] = touch;
@@ -68,6 +74,7 @@ bool readGpsFunc(void *) {
 
 void setup() {
   Serial.begin(115200);
+  delay(3000);
   Serial.println("Starting Kinisi v1 Sleeve");
 
   // Initialize devices
@@ -108,6 +115,8 @@ void setup() {
   gps_data.valid = false;
   gps_data.fix_valid = false;
   pinMode(TOUCH_SENSOR_PIN, INPUT_PULLUP);
+
+  kinisi_sound.setup();
 }
 
 unsigned long delay_ticks = 1;

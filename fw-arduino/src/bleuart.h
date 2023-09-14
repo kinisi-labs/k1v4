@@ -11,6 +11,7 @@
  All text above, and the splash screen below must be included in
  any redistribution
 *********************************************************************/
+#include <Arduino.h>
 #include <bluefruit.h>
 #include <Adafruit_LittleFS.h>
 #include <InternalFileSystem.h>
