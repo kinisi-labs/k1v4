@@ -13,7 +13,7 @@
 #include "src/imu.h"
 #include "src/arduino-timer/src/arduino-timer.h"
 #include "src/sound.h"
-
+#include "constants.h"
 
 Timer<4, millis> timer;
 
@@ -36,7 +36,6 @@ char uart_buf[1024];
 GpsData gps_data;
 StaticJsonDocument<2048> s;
 const int TOUCH_SENSOR_PIN = 13;
-const char * version = "1.1.3";
 long packetCnt = 0;
 
 bool readImusAndSerializeFunc(void *) {
@@ -44,7 +43,12 @@ bool readImusAndSerializeFunc(void *) {
 
   if (packetCnt & 0x1FF == 0) {
     char buf[33];
-    s["v"] = version;
+    s["v"] = FW_VERSION;
+    s["hwv"] = HW_VERSION;
+    s["iup"] = IMU_UPDATE_PERIOD_MS;
+    s["gup"] = GPS_UPDATE_PERIOD_MS;
+    s["sup"] = SOUND_UPDATE_PERIOD_MS;
+
     ble_uart.getShortId(buf);
     s["sid"] = buf;
     ble_uart.getFullId(buf);
@@ -118,8 +122,8 @@ void setup() {
 
   ble_uart.setup();
 
-  timer.every(25, readImusAndSerializeFunc);
-  timer.every(1000, readGpsFunc);
+  timer.every(IMU_UPDATE_PERIOD_MS, readImusAndSerializeFunc);
+  timer.every(GPS_UPDATE_PERIOD_MS, readGpsFunc);
   gps_data.valid = false;
   gps_data.fix_valid = false;
   pinMode(TOUCH_SENSOR_PIN, INPUT_PULLUP);

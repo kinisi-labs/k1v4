@@ -3,12 +3,13 @@
 
 #include <Arduino.h>
 #include <PDM.h>
+#include "../constants.h"
 
 
 class KinisiSound {
  private:
   static int readings;
-  static int16_t sound_buffer[320];
+  static int16_t sound_buffer[SOUND_BUFFER_SIZE];
   static volatile double last_sound;
 
   static void pdm_on_receive() {
@@ -52,7 +53,7 @@ void KinisiSound::setup() {
 }
 
 int KinisiSound::readings = 0;
-int16_t KinisiSound::sound_buffer[320] = { 0 };
+int16_t KinisiSound::sound_buffer[SOUND_BUFFER_SIZE] = { 0 };
 volatile double KinisiSound::last_sound = 0.0;
 
 #endif
