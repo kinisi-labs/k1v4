@@ -7,68 +7,6 @@ import { bw } from "/libs/bitwrench-mod.js";
 let gDataStorageCount = 0;
 
 const createSleeveBluetoothConnector = function () {
-  const UART = createUartConnector();
-  //BLE data fetch for k1
-  let gBLE = { connected: false };
-  let gDataStable = {}; // last full json record
-  let gDataStorage = {
-    max: 22 * 60 * 60,
-    data: [],
-    packetInfo: {},
-    pageStartTime: new Date().getTime(),
-    _count: gDataStorageCount
-  };
-
-  gDataStorageCount += 1;
-
-  const doBLEPair = function (callback, disconnectCallback) {
-    UART.debug = 2;
-    console.log("attempting to connect...");
-    UART.connect((d) => {
-      gBLE = d;
-      gBLE.connected = true;
-      gBLE.on("data", gBLEcallback);
-      gBLE.on("test", gDataStorage);
-      gBLE.buf = "";
-      gBLE.jsonRec = { recTime: new Date().getTime() };
-      if (callback) {
-        callback(gBLE);
-      }
-      console.log("gBle", gBLE);
-    }, () => {
-      if (disconnectCallback && gBLE?.connected) {
-        disconnectCallback();
-      }
-    });
-  };
-
-  const doBLEUnpair = async function (callback) {
-    if (gBLE?.connected) {
-      await gBLE.close();
-      console.log("Bluetooth disconnected");
-      gBLE = { connected: false };
-      if (callback) {
-        callback(gBLE);
-      }
-    }
-  };
-
-  const updateData = function (data) {
-    if (gBLE.connected != false)
-      if ("data" in gBLE.jsonRec) {
-        if (Object.keys(gBLE.jsonRec).length > 0) var x;
-        for (x in gBLE.jsonRec.data)
-          gDataStable[x] = bw.jsonClone(gBLE.jsonRec.data[x]);
-
-        var decData = bw.jsonClone(gDataStable);
-
-        decData["recTime"] = new Date().getTime(); // ms received timestamp
-        gDataStorage.data.push(decData);
-        if (gDataStorage.data.length > gDataStorage.max)
-          gDataStorage.data.shift(); //drop first
-      }
-  };
-
   const gBLEcallback = function (d) {
     console.log("k1datastorage", gDataStorage);
     console.log("BLE Callback", d, gBLE.buf);
@@ -106,6 +44,54 @@ const createSleeveBluetoothConnector = function () {
     //bw.DOM("#raw",gBLE.buf);
     updateData(gBLE.jsonRec); // callback with fully assembled json data available now.
   };
+  const UART = createUartConnector(gDataStorageCount > 0 ? (x) => console.log("TEST", x) : gBLEcallback);
+
+  //BLE data fetch for k1
+  let gBLE = { connected: false, buf: "" };
+  let gDataStable = {}; // last full json record
+  let gDataStorage = {
+    max: 22 * 60 * 60,
+    data: [],
+    packetInfo: {},
+    pageStartTime: new Date().getTime(),
+    _count: gDataStorageCount
+  };
+
+  gDataStorageCount += 1;
+
+  const doBLEPair = async function () {
+    UART.debug = 2;
+    console.log("attempting to connect...");
+    await UART.connect();
+    gBLE.connected = true;
+  };
+
+  const doBLEUnpair = async function (callback) {
+    if (gBLE?.connected) {
+      await UART.disconnect();
+      gBLE = { connected: false };
+      if (callback) {
+        callback(gBLE);
+      }
+    }
+  };
+
+  const updateData = function (data) {
+    if (gBLE.connected != false)
+      if ("data" in gBLE.jsonRec) {
+        if (Object.keys(gBLE.jsonRec).length > 0) var x;
+        for (x in gBLE.jsonRec.data)
+          gDataStable[x] = bw.jsonClone(gBLE.jsonRec.data[x]);
+
+        var decData = bw.jsonClone(gDataStable);
+
+        decData["recTime"] = new Date().getTime(); // ms received timestamp
+        gDataStorage.data.push(decData);
+        if (gDataStorage.data.length > gDataStorage.max)
+          gDataStorage.data.shift(); //drop first
+      }
+  };
+
 
   const asmPacket = function (s, accum) {
     s = bw.toa(s, "string", s, "");

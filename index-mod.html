@@ -266,7 +266,8 @@
         //<button class="buttonStuff" onclick="btnResetDataStorage()">Reset Data</button>
         //<button class="buttonStuff" onclick="btnSaveData()">Export Data</button>
         //<button class="buttonStuff" onclick="btnConnect()"></button>
-   var gDataStable, gDataStorage, bluetoothConnector;
+   var gDataStable, gDataStorage;
+   let bluetoothConnector;
    function btnConnect() {
        console.log("btnConnect");
        if (bluetoothConnector) {
