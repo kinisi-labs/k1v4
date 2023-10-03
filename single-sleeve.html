@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>Kinisi K1</title>
+  <!-- 3D support -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/109/three.min.js"></script>
+  <script src="./libs/GLTFLoader.js"></script>
+
+  <!-- charts -->
+  <script src="./libs/chartjs-4.3.0-umd.js"></script>
+  <script src="./libs/chartjs-helpers.js"></script>
+  <script src="./libs/knee-image-functions.js"></script>
+
+  <!-- html helpers -->
+  <script src="./libs/bitwrench.min.js"></script>
+  <script src="./libs/gaugejs.min.js"></script>
+
+
+  <!-- vectors and math -->
+  <script src="./libs/sensordata.js"></script>
+  <script src="./libs/www-ahrs.js"></script>
+  <!-- <script src="./libs/mc-ahrs.js"></script> -->
+  <script src="./libs/mc-ahrs2.js"></script>
+
+  <!-- lighning icon-->
+  <link
+    href="data:image/x-icon;base64,AAABAAEAEBAQAAEABAAoAQAAFgAAACgAAAAQAAAAIAAAAAEABAAAAAAAgAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAlv//AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAAAAAAAAABAAAAAAAAAAEQAAAAAAAAARAAAAAAAAABEQAAAAAAARERAAAAAAAAERAAAAAAAAAREAAAAAAAABERAAAAAAAAAREAAAAAAAABERAAAAAAAAEREAAAAAAAAAAAAAD9/wAA/f8AAPz/AAD8fwAA/H8AAPw/AAD8PwAA8B8AAPAPAAD4DwAA+D8AAPgfAAD8HwAA/A8AAPwPAAD8DwAA"
+    rel="icon" type="image/x-icon" />
+
+
+  <!-- 3D rendering -->
+  <script src="./libs/3d-functions.js"></script>
+  <script src="./libs/quaternion.min.js"></script>
+
+  <!-- css -->
+  <link rel="stylesheet" type="text/css" href="./libs/common-items.css" />
+
+</head>
+
+<body>
+  <div id="panel" class="fullPanel bw-container">
+    <div class="bw-row statusRow ">
+      <div class="status">
+        <div class="status-inner">
+          <img class="kinisi-color kinisi-logo" src="./assets/Kinisi-Logo.svg" width="180"></img>
+        </div>
+        <span class="tagline">K1X Portable Motion Lab</span>
+      </div>
+    </div>
+    <div class="bw-row">
+      <div class="bw-col-12 buttonbar">
+        <label class="sessionLabel" for="sessionNameN">Session Name:</label>
+        <textarea id="sessionName" name="sessionNameN" rows="1" cols="20" class="sessionText"></textarea>
+        <label class="sessionLabel" for="sessionHeightN">Height (cm):</label>
+        <textarea id="sessionHeight" name="sessionHeightN" rows="1" cols="8" class="sessionText"></textarea>
+        <label class="sessionLabel" for="sessionWeighttN">Weight (kg):</label>
+        <textarea id="sessionWeight" name="sessionWeighttN" rows="1" cols="8" class="sessionText"></textarea>
+        <button class="buttonStuff" onclick="btnResetDataStorage()">Reset Data</button>
+        <button class="buttonStuff" onclick="btnSaveData()">Export Data</button>
+      </div>
+    </div>
+
+    <div class="bw-row " id="infobarcontainer">
+      <div id="info" class="bw-col-12 infobar">Waiting for Device...</div>
+    </div>
+    <!-- first row -->
+    <div class="bw-row coreRowHeight">
+      <div class="bw-col-3 bonesHeight">
+        <div class="widget"><img id="bonesFront0" style="width:100%;height:100%"></img></div>
+      </div>
+
+      <div class="bw-col-3 bonesHeight">
+        <div class="widget"><img id="bonesLateral0" style="width:100%;height:100%"></img></div>
+      </div>
+
+      <div class="bw-col-3 bonesHeight">
+        <div class="slimChart"> <canvas class="widget" id="flex0"></canvas></div>
+        <div class="slimChart"> <canvas class="widget" id="rotation0"></canvas></div>
+        <div class="slimChart"> <canvas class="widget" id="tilt0"></canvas></div>
+      </div>
+
+      <div class="bw-col-3 bonesHeight">
+        <div class="slimChart"> <canvas class="widget" id="thigh0"></canvas></div>
+        <div class="slimChart"> <canvas class="widget" id="calf0"></canvas></div>
+        <div class="slimChart"> <canvas class="widget" id="sound0"></canvas></div>
+      </div>
+    </div>
+    <div class="bw-row">
+      <div class="bw-col-12" style="padding-left:0.5%; padding-right: 0.5%;">
+        <div class="widget" id="ahrs" style=" height:100%"></div>
+      </div>
+    </div>
+
+  </div>
+  </div>
+  <script type="text/javascript">
+
+    // show data streaming stats
+    if (bw.getURLParam("showstats", "false") == "true") {
+      bw.DOM("#infobarcontainer")[0].style.display = "block";
+    }
+    else {
+      bw.DOM("#infobarcontainer")[0].style.display = "none";
+    }
+    bw.getURLParam("showstats", "true")
+    const maxlen = 120; // chart len in points
+
+    let charts0 = {
+      flex: newChartJSLineChart("#flex0", 1, "Flexion", maxlen, [-20, 150]),
+      rot: newChartJSLineChart("#rotation0", 1, "Rotation", maxlen, [-30, 30]),
+      tilt: newChartJSLineChart("#tilt0", 1, "Tilt", maxlen, [-30, 30]),
+      thigh: newChartJSLineChart("#thigh0", 2, "Thigh Accel + Force", maxlen, [-50, 50], [0, 100]),
+      calf: newChartJSLineChart("#calf0", 2, "Shin  Accel + Force", maxlen, [-50, 50], [0, 100]),
+      sound: newChartJSLineChart("#sound0", 1, "Sound Energy", maxlen, [0, 200]),
+      bonesFront: "#bonesFront0",
+      bonesLateral: "#bonesLateral0"
+    }
+
+    let snAvg = 0;
+    let snDCEnergy = 0;
+
+
+    let thighState = { quat: [1, 0, 0, 0], intFB: [0, 0, 0], RPY: [0, 0, 0] };
+    let calfState = { quat: [1, 0, 0, 0], intFB: [0, 0, 0], RPY: [0, 0, 0] };
+    let ahrs_init = false;
+
+    //update charts
+    /* requires this data structure :
+    data : {
+      flexion : [flexional_angle], // degrees
+      tilt    : [tilt_angle], // degrees
+      rotation: [rotation_angle], // degrees
+      thigh   : [accel, force], // accel in g, force in N
+      calf    : [accel, force], // accel in g, force in N
+      sn      : [sound_energy], // sound energy
+    }
+    use vectorScale to scale vectors to degrees like this:
+      vectorScale(angle_in_radians, 57)
+    */
+
+    let renderCharts = function (charts, data) {
+
+      if ("flexion" in data)
+        charts.flex.updateChart(data["flexion"], true);
+
+      if ("tilt" in data)
+        charts.tilt.updateChart(data["tilt"], true);
+
+      if ("rotation" in data) {
+        charts.rot.updateChart(data["rotation"], true);
+      }
+
+      if ("thigh" in data)
+        charts.thigh.updateChart(data["thigh"], true);
+
+      if ("calf" in data)
+        charts.calf.updateChart(vectorScale(data["calf"], 57), true);
+
+      if ("sn" in data) {
+        let alpha = 0.8;
+        let alphaDC = 0.01;
+        snAvg = snAvg * (1 - alpha) + data["sn"][0] * (alpha);
+        snDCEnergy = snAvg * (1 - alphaDC) + data["sn"][0] * (alphaDC);
+        //let snS = bw.mapScale(gDataStable["sn"],0,15000,0,90);
+        //sn.updateChart([5*Math.log2(gDataStable["sn"])], true);
+        charts.sound.updateChart([10 * Math.log10(snAvg)], true);
+      }
+
+      renderKneeBonesAngle(charts.bonesFront, data.flexion[0], "front", "right")
+      renderKneeBonesAngle(charts.bonesLateral, data.flexion[0], "lateral", "right")
+
+    } // end of renderCharts
+
+    let renderInfoArea = function (data) {
+      // stats area refresh
+      let i, info = "";
+      for (i in data.packetInfo) {
+        let k = i, v = data.packetInfo[i];
+        info += k + ": " + v.toFixed(2) + "&nbsp;&nbsp;";
+      }
+      document.getElementById("info").innerHTML = info;
+    }
+
+    setInterval(
+      () => {
+        let thigh = bw.mapScale(Math.sin(Date.now() / 1000), -1, 1, -30, 150);
+        let calf = bw.mapScale(Math.sin(Date.now() / 1000), -1, 1, -30, 150);
+
+        let data = {
+          flexion: [bw.mapScale(Math.sin(Date.now() / 1000), -1, 1, 0, 90)],
+          tilt: [bw.mapScale(Math.sin(Date.now() / 1000), -1, 1, -30, 30)],
+          rotation: [bw.mapScale(Math.sin(Date.now() / 1000), -1, 1, -20, 20)],
+          thigh: [thigh, thigh * 15], // sim accel, accl* simulated thigh weight
+          calf: [calf, calf * 9], // sim accel, accel *  simulated calf weight
+          sn: [100 + 100 * Math.sin(Date.now() / 100)], // simulated sound energy
+        }
+        renderCharts(charts0, data)
+      }
+      , 50);
+
+
+
+  </script>
+
+  <!-- BLE support -->
+  <script src="./libs/uart.js"></script>
+  <script src="./libs/k1-btdata.js"></script>
+</body>
+
+</html>
