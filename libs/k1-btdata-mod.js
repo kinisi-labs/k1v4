@@ -4,8 +4,6 @@ import { bw } from "/libs/bitwrench-mod.js";
 // data is in gDataStable;
 // raw data in gBLE.jsonRec;
 
-let gDataStorageCount = 0;
-
 const createSleeveBluetoothConnector = function () {
   const gBLEcallback = function (d) {
     console.log("k1datastorage", gDataStorage);
@@ -44,20 +42,17 @@ const createSleeveBluetoothConnector = function () {
     //bw.DOM("#raw",gBLE.buf);
     updateData(gBLE.jsonRec); // callback with fully assembled json data available now.
   };
-  const UART = createUartConnector(gDataStorageCount > 0 ? (x) => console.log("TEST", x) : gBLEcallback);
-
+  const UART = createUartConnector(gBLEcallback);
   //BLE data fetch for k1
-  let gBLE = { connected: false, buf: "" };
+  let gBLE = {connected: false, buf: ""};
   let gDataStable = {}; // last full json record
   let gDataStorage = {
     max: 22 * 60 * 60,
     data: [],
     packetInfo: {},
     pageStartTime: new Date().getTime(),
-    _count: gDataStorageCount
   };
 
-  gDataStorageCount += 1;
 
   const doBLEPair = async function () {
     UART.debug = 2;

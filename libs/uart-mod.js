@@ -6,20 +6,18 @@
 */
 
 export default function createUartConnector(userBleCallback) {
-  let bluetoothDevice;
-  console.log("Fble", userBleCallback);
+  const bluetoothDevice = new p5ble();
   let bleCallback = userBleCallback;
-  let logLevel = 1;
-  let rxListener;
   let rxCharacteristic;
-
-  let flowControl = true;
-  let flowControlXOFF = false;
 
   let NORDIC_SERVICE = "6e400001-b5a3-f393-e0a9-e50e24dcca9e";
   let NORDIC_TX = "6e400002-b5a3-f393-e0a9-e50e24dcca9e";
   let NORDIC_RX = "6e400003-b5a3-f393-e0a9-e50e24dcca9e";
   let CHUNKSIZE = 20;
+
+  let flowControl = true;
+  let logLevel = 1;
+
 
   function log(level, ...args) {
     if (level <= logLevel) {
@@ -30,37 +28,22 @@ export default function createUartConnector(userBleCallback) {
     return String.fromCharCode.apply(null, new Uint8Array(buf));
   }
 
-  async function onScanButtonClick() {
-    let options = { filters: [
-      { namePrefix: "kinisi" },
-      { services: [NORDIC_SERVICE] },
-    ] };
-
-    bluetoothDevice = null;
-    try {
-      log(1, 'Requesting Bluetooth Device...');
-      bluetoothDevice = await navigator.bluetooth.requestDevice(options);
-      bluetoothDevice.addEventListener('gattserverdisconnected', onDisconnected);
-      log(1, "Device Name:       " + bluetoothDevice.name);
-      log(1, "Device ID:         " + bluetoothDevice.id);
-      connect();
-    } catch (error) {
-      log(0, 'Error ' + error);
-    }
+  function deviceConnect() {
+    return new Promise((resolve, reject) => {
+      bluetoothDevice.connect(NORDIC_SERVICE, (error, characteristics) => {
+        if (error) {
+          reject(error);
+        } else {
+          resolve(characteristics);
+        }
+      });
+    });
   }
 
   async function connect() {
-
-    log(1, 'Connecting to Bluetooth Device...');
-    let server = await bluetoothDevice.gatt.connect();
-    log(1, '> Bluetooth Device connected');
-    let service = await server.getPrimaryService(NORDIC_SERVICE);
-    log(1, 'Got service');
-    rxCharacteristic = await service.getCharacteristic(NORDIC_RX);
-    log(1, 'RX characteristic');
-
-    rxListener = function(event) {
-      var dataview = event.target.value;
+    let characteristics = await deviceConnect();
+    console.log(characteristics);
+    let rxListener = function (dataview) {
       if (flowControl) {
         for (var i = 0; i < dataview.length; i++) {
           var ch = dataview.getUint8(i);
@@ -82,34 +65,27 @@ export default function createUartConnector(userBleCallback) {
         bleCallback(str);
       }
     };
-
-    rxCharacteristic.addEventListener(
-      "characteristicvaluechanged",
-      rxListener
-    );
-    await rxCharacteristic.startNotifications();
+    for (let characteristic of characteristics) {
+      if (NORDIC_RX.localeCompare(characteristic.uuid) === 0) {
+        rxCharacteristic = characteristic;
+        break;
+      }
+    }
+    if (!rxCharacteristic) {
+      log(0, "Recieve characteristic not present");
+    }
+    bluetoothDevice.startNotifications(rxCharacteristic, rxListener, "custom");
   }
 
-  function onDisconnectButtonClick() {
-    if (rxListener) {
-      rxCharacteristic.removeEventListener("characteristicvaluechanged", rxListener);
-    }
 
-    if (bluetoothDevice?.gatt.connected) {
-      log(1, 'Disconnecting from Bluetooth Device...');
-      bluetoothDevice.gatt.disconnect();
-    } else {
-      log(1, '> Bluetooth Device is already disconnected');
-    }
-  }
-
-  function onDisconnected(event) {
-    // Object event.target is Bluetooth Device getting disconnected.
-    log(1, '> Bluetooth Device disconnected');
+  async function disconnect() {
+    bluetoothDevice.stopNotifications();
+    rxCharacteristic = null;
+    bluetoothDevice.disconnect();
   }
 
   return {
-    connect: onScanButtonClick,
-    disconnect: onDisconnectButtonClick
+    connect: connect,
+    disconnect: disconnect
   };
 };
