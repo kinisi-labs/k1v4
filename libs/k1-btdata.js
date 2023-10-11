@@ -130,7 +130,7 @@ var gBLEcallback = function (d) {
 var asmPacket = function (s, accum) {
     s = bw.toa(s, "string", s, "");
     accum = bw.toa(accum, "string", accum, "");
-    console.log("msg", s);
+    //console.log("msg", s);
 
     accum += s;
 
