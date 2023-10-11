@@ -1,5 +1,6 @@
+import * as THREE from 'three';
 
-function createThreeContext() {
+const createThreeContext = function() {
   // 3d model
   let renderer = new THREE.WebGLRenderer();
   let scene = new THREE.Scene();
@@ -19,11 +20,15 @@ function createThreeContext() {
     container.appendChild(renderer.domElement);
     var model = bw.getURLParam("model") == "./assets/nano33ble.glb"; //  "./assets/RiggedFigure.glb"; //"nano" ? "./assets/nano33ble.glb" : "./assets/RiggedFigure.glb";
     axesHelper = new THREE.AxesHelper(3); // The number defines the size of the helper scene.add(axesHelper);
+    axesHelper.setColors(new THREE.Color("blue"), new THREE.Color("red"), new THREE.Color("green"));
+    let smallAxesHelper = new THREE.AxesHelper(0.5);
+    smallAxesHelper.setColors(new THREE.Color("blue"), new THREE.Color("red"), new THREE.Color("green"));
     scene.add(axesHelper);
-    scene.add(new THREE.AxesHelper(0.5));
+    scene.add(smallAxesHelper);
     camera.position.set(4, 4, 4);
     //camera.rotation.z = Math.PI; // 180
     camera.lookAt(new THREE.Vector3(0, 0, 0));
+    camera.rotateOnWorldAxis(new THREE.Vector3(1, 1, 1).normalize(), 2 * Math.PI / 3);
     renderer.render(scene, camera);
   }
   /*
@@ -72,7 +77,7 @@ function createThreeContext() {
   //init3D();
 
   function update3d(quat) {
-    axesHelper.applyQuaternion(quaternion.inverse());
+    axesHelper.applyQuaternion(quaternion.invert());
     quaternion = new THREE.Quaternion(quat.x, quat.y, quat.z, quat.w);
     quaternion.normalize();
     axesHelper.applyQuaternion(quaternion);
@@ -83,4 +88,8 @@ function createThreeContext() {
     init3D,
     update3d
   };
-}
+};
+console.log("Loaded 3d-functions.js");
+window.createThreeContext = createThreeContext;
+export default createThreeContext;
+
