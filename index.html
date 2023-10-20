@@ -1,288 +1,296 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
+  <head>
+    <title>Kinisi K1</title>
+    <!-- 3D support -->
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "https://unpkg.com/three@v0.157.0/build/three.module.js",
+          "three/addons/": "https://unpkg.com/three@v0.157.0/examples/jsm/"
+        }
+      }
+    </script>
+    <!-- <script src="./libs/GLTFLoader.js"></script> -->
 
-<head>
-  <title>Kinisi K1</title>
-  <!-- 3D support -->
-  <script type="importmap">
-   {
-       "imports": {
-           "three": "https://unpkg.com/three@v0.157.0/build/three.module.js",
-           "three/addons/": "https://unpkg.com/three@v0.157.0/examples/jsm/"
-       }
-   }
-  </script>
-  <!-- <script src="./libs/GLTFLoader.js"></script> -->
+    <!-- charts -->
+    <script src="./libs/chartjs-4.3.0-umd.js"></script>
+    <script src="./libs/chartjs-helpers.js"></script>
+    <script src="./libs/knee-image-functions.js"></script>
 
-  <!-- charts -->
-  <script src="./libs/chartjs-4.3.0-umd.js"></script>
-  <script src="./libs/chartjs-helpers.js"></script>
-  <script src="./libs/knee-image-functions.js"></script>
+    <!-- html helpers -->
+    <script src="./libs/bitwrench.min.js"></script>
+    <script src="./libs/gaugejs.min.js"></script>
 
-  <!-- html helpers -->
-  <script src="./libs/bitwrench.min.js"></script>
-  <script src="./libs/gaugejs.min.js"></script>
+    <!-- vectors and math -->
+    <script src="./libs/sensordata.js"></script>
+    <script src="./libs/www-ahrs.js"></script>
+    <!-- <script src="./libs/mc-ahrs.js"></script> -->
+    <script src="./libs/quaternion2.min.js"></script>
+    <!-- <script type="module" src="./libs/3d-functions.js"></script> -->
 
-
-  <!-- vectors and math -->
-  <script src="./libs/sensordata.js"></script>
-  <script src="./libs/www-ahrs.js"></script>
-  <!-- <script src="./libs/mc-ahrs.js"></script> -->
-  <script src="./libs/quaternion2.min.js"></script>
-  <script type="module" src="./libs/3d-functions.js"></script>
-
-  <link
-    href="data:image/x-icon;base64,AAABAAEAEBAQAAEABAAoAQAAFgAAACgAAAAQAAAAIAAAAAEABAAAAAAAgAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAlv//AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAAAAAAAAABAAAAAAAAAAEQAAAAAAAAARAAAAAAAAABEQAAAAAAARERAAAAAAAAERAAAAAAAAAREAAAAAAAABERAAAAAAAAAREAAAAAAAABERAAAAAAAAEREAAAAAAAAAAAAAD9/wAA/f8AAPz/AAD8fwAA/H8AAPw/AAD8PwAA8B8AAPAPAAD4DwAA+D8AAPgfAAD8HwAA/A8AAPwPAAD8DwAA"
-    rel="icon" type="image/x-icon" />
-  <!-- 3D rendering -->
-  <!--
+    <link
+      href="data:image/x-icon;base64,AAABAAEAEBAQAAEABAAoAQAAFgAAACgAAAAQAAAAIAAAAAEABAAAAAAAgAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAlv//AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAAAAAAAAABAAAAAAAAAAEQAAAAAAAAARAAAAAAAAABEQAAAAAAARERAAAAAAAAERAAAAAAAAAREAAAAAAAABERAAAAAAAAAREAAAAAAAABERAAAAAAAAEREAAAAAAAAAAAAAD9/wAA/f8AAPz/AAD8fwAA/H8AAPw/AAD8PwAA8B8AAPAPAAD4DwAA+D8AAPgfAAD8HwAA/A8AAPwPAAD8DwAA"
+      rel="icon"
+      type="image/x-icon"
+    />
+    <!-- 3D rendering -->
+    <!--
   <script> bw.DOMInsertElement("head", bw.htmlFavicon("⚡", "black"))
     // running preson :  &#127939 
   </script>
 -->
-  </script>
-  <style>
-    * {
-      font-family: Arial, Helvetica, sans-serif
-    }
+    <style>
+      * {
+        font-family: Arial, Helvetica, sans-serif
+      }
 
-    html {
-      margin 0;
-      padding: 0;
-      height: 100%;
-      width: 100%;
-      overflow: hidden;
-    }
+      html {
+        margin 0;
+        padding: 0;
+        height: 100%;
+        width: 100%;
+        overflow: hidden;
+      }
 
-    body {
-      margin 0;
-      padding: 0;
-      height: 99%;
-      width: 100%;
-      background-color: rgb(30, 61, 103);
-      overflow: hidden
-    }
+      body {
+        margin 0;
+        padding: 0;
+        height: 99%;
+        width: 100%;
+        background-color: rgb(30, 61, 103);
+        overflow: hidden
+      }
 
-    .widget {
-      background: #111;
-      border: 1px solid #888;
-      border-radius: 9px !important;
-      color: #fff;
-      height: 98%;
-    }
-
-
-    .status {
-      /*background-image: url("./assets/kinisi-logo-white.png");*/
-      background-size: contain;
-      background-position: 98% 50%;
-      background-repeat: no-repeat;
-      width: 100%;
-      height: 93%;
-      color: white;
-    }
-
-    .statusRow {
-      width: 100%;
-      height: 10vh;
-      padding-top: 1%;
-    }
-
-    .statusInner {
-      padding-top: 10%;
-      padding-bottom: 10%;
-    }
-
-    .defHeight {
-      height: 25vh;
-    }
-
-    .wheight {
-      height: 100%;
-      padding: 4px;
-    }
+      .widget {
+        background: #111;
+        border: 1px solid #888;
+        border-radius: 9px !important;
+        color: #fff;
+        height: 98%;
+      }
 
 
-    .sepHeight {
-      height: 1vh;
-    }
+      .status {
+        /*background-image: url("./assets/kinisi-logo-white.png");*/
+        background-size: contain;
+        background-position: 98% 50%;
+        background-repeat: no-repeat;
+        width: 100%;
+        height: 93%;
+        color: white;
+      }
 
-    .kinisi-logo {
-      padding-left: 0.25rem;
-      height: 5vh;
-    }
+      .statusRow {
+        width: 100%;
+        height: 10vh;
+        padding-top: 1%;
+      }
 
-    .tagline {
-      vertical-align: middle;
-      padding-bottom: 0.7rem;
-      padding-top: 1.3rem;
-      padding-left: 1rem;
-      font-size: 1.2rem;
-      height: 4vh;
-    }
+      .statusInner {
+        padding-top: 10%;
+        padding-bottom: 10%;
+      }
 
-    .flipHorizontal {
-      -webkit-transform: scaleX(-1);
-      transform: scaleX(-1);
-    }
+      .defHeight {
+        height: 25vh;
+      }
 
-    .buttonbar {
-      padding-left: 1vw;
-      padding-top: 1rem;
-      padding-bottom: 1rem;
-      padding-right: 1vw;
-      color: #aaa;
-      vertical-align: middle;
-    }
+      .wheight {
+        height: 100%;
+        padding: 4px;
+      }
 
-    .infobar {
-      padding-left: 1vw;
-      color: #aaa;
-    }
 
-    img {
-      border-radius: 4px !important;
-    }
+      .sepHeight {
+        height: 1vh;
+      }
 
-    #ahrs {
-      padding: 0.25rem;
-    }
+      .kinisi-logo {
+        padding-left: 0.25rem;
+        height: 5vh;
+      }
 
-    .sessionText {
-      resize: none;
-      border-radius: 4px !important;
-      color: #222;
-      background-color: #eee;
-      vertical-align: middle;
-    }
+      .tagline {
+        vertical-align: middle;
+        padding-bottom: 0.7rem;
+        padding-top: 1.3rem;
+        padding-left: 1rem;
+        font-size: 1.2rem;
+        height: 4vh;
+      }
 
-    .sessionLabel {
-      color: #ddd;
-      padding-top: 0.3rem;
-      vertical-align: middle;
-    }
+      .flipHorizontal {
+        -webkit-transform: scaleX(-1);
+        transform: scaleX(-1);
+      }
 
-    .buttonStuff {
-      float: right;
-    }
-  </style>
-</head>
+      .buttonbar {
+        padding-left: 1vw;
+        padding-top: 1rem;
+        padding-bottom: 1rem;
+        padding-right: 1vw;
+        color: #aaa;
+        vertical-align: middle;
+      }
 
-<body>
-  <div id="panel" class="fullPanel bw-container">
-    <div class="bw-row statusRow ">
-      <div class="status">
-        <div class="status-inner">
-          <img class="kinisi-color kinisi-logo" src="./assets/Kinisi-Logo.svg" width="180"></img>
+      .infobar {
+        padding-left: 1vw;
+        color: #aaa;
+      }
+
+      img {
+        border-radius: 4px !important;
+      }
+
+      #ahrs {
+        padding: 0.25rem;
+      }
+
+      .sessionText {
+        resize: none;
+        border-radius: 4px !important;
+        color: #222;
+        background-color: #eee;
+        vertical-align: middle;
+      }
+
+      .sessionLabel {
+        color: #ddd;
+        padding-top: 0.3rem;
+        vertical-align: middle;
+      }
+
+      .buttonStuff {
+        float: right;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div id="panel" class="fullPanel bw-container">
+      <div class="bw-row statusRow">
+        <div class="status">
+          <div class="status-inner">
+            <img
+              class="kinisi-color kinisi-logo"
+              src="./assets/Kinisi-Logo.svg"
+              width="180"
+            />
+          </div>
+          <span class="tagline">K1X Portable Motion Lab</span>
         </div>
-        <span class="tagline">K1X Portable Motion Lab</span>
       </div>
-    </div>
-    <div class="bw-row">
-      <div class="bw-col-12 buttonbar">
-        <label class="sessionLabel" for="sessionNameN">Session Name:</label>
-        <textarea id="sessionName" name="sessionNameN" rows="1" cols="20" class="sessionText"></textarea>
-        &nbsp;&nbsp;&nbsp;
-        <label class="sessionLabel" for="sessionHeightN">Height (cm):</label>
-        <textarea id="sessionHeight" name="sessionHeightN" rows="1" cols="6" class="sessionText"></textarea>
-        &nbsp;&nbsp;&nbsp;
-        <label class="sessionLabel" for="sessionWeighttN">Weight (kg):</label>
-        <textarea id="sessionWeight" name="sessionWeighttN" rows="1" cols="6" class="sessionText"></textarea>
-        <button class="buttonStuff" onclick="btnLoadData()">Load Data</button>
-        <button class="buttonStuff" onclick="btnResetDataStorage()">Reset Data</button>
-        <button class="buttonStuff" onclick="btnSaveData()">Export Data</button>
-      </div>
-    </div>
-
-    <div class="bw-row " id="infobarcontainer">
-      <div id="info" class="bw-col-12 infobar">Waiting for Device...</div>
-    </div>
-    <!-- first row -->
-    <div class="bw-row defHeight">
-      <div class="bw-col-2 wheight">
-        <canvas class="widget" id="a0"></canvas>
-      </div>
-
-      <div class="bw-col-2 wheight">
-        <canvas class="widget" id="g0"> </canvas>
-      </div>
-
-      <div class="bw-col-2 wheight">
-        <canvas class="widget" id="m0"></canvas>
-      </div>
-
-      <div class="bw-col-2 wheight">
-          <div class="widget" id="o0"></div>
-        <!-- <canvas class="widget" id="o0"></canvas>-->
-        <!--
-        <div class="widget"><img id="bonesFront" style="width:100%;height:100%"></img></div>
-        -->
+      <div class="bw-row">
+        <div class="bw-col-12 buttonbar">
+          <label class="sessionLabel" for="sessionNameN">Session Name:</label>
+          <textarea
+            id="sessionName"
+            name="sessionNameN"
+            rows="1"
+            cols="20"
+            class="sessionText"
+          ></textarea>
+          &nbsp;&nbsp;&nbsp;
+          <label class="sessionLabel" for="sessionHeightN">Height (cm):</label>
+          <textarea
+            id="sessionHeight"
+            name="sessionHeightN"
+            rows="1"
+            cols="6"
+            class="sessionText"
+          ></textarea>
+          &nbsp;&nbsp;&nbsp;
+          <label class="sessionLabel" for="sessionWeighttN">Weight (kg):</label>
+          <textarea
+            id="sessionWeight"
+            name="sessionWeighttN"
+            rows="1"
+            cols="6"
+            class="sessionText"
+          ></textarea>
+          <button class="buttonStuff" onclick="btnLoadData()">Load Data</button>
+          <button class="buttonStuff" onclick="btnResetDataStorage()">
+            Reset Data
+          </button>
+          <button class="buttonStuff" onclick="btnSaveData()">
+            Export Data
+          </button>
+        </div>
       </div>
 
-      <div class="bw-col-2 wheight">
-          <div class="widget" id="mo0"></div>
+      <div class="bw-row" id="infobarcontainer">
+        <div id="info" class="bw-col-12 infobar">Waiting for Device...</div>
+      </div>
+      <!-- first row -->
+      <div class="bw-row defHeight">
+        <div class="bw-col-3 wheight">
+          <canvas class="widget" id="a0"></canvas>
+        </div>
+
+        <div class="bw-col-3 wheight">
+          <canvas class="widget" id="g0"> </canvas>
+        </div>
+
+        <div class="bw-col-3 wheight">
+          <canvas class="widget" id="m0"></canvas>
+        </div>
+
+        <div class="bw-col-3 wheight">
+          <!-- <canvas class="widget" id="o0"></canvas>-->
+          <div class="widget">
+            <img id="bonesFront" style="width: 100%; height: 100%" />
+          </div>
+        </div>
       </div>
 
-    </div>
+      <div class="bw-row bw-col-12 sepHeight"></div>
 
-    <div class="bw-row bw-col-12 sepHeight"></div>
+      <!-- second row -->
+      <div class="bw-row bw-col-12 defHeight">
+        <div class="bw-col-3 wheight">
+          <canvas class="widget" id="a1"></canvas>
+        </div>
 
+        <div class="bw-col-3 wheight">
+          <canvas class="widget" id="g1"></canvas>
+        </div>
 
-    <!-- second row -->
-    <div class="bw-row bw-col-12 defHeight">
-      <div class="bw-col-2 wheight">
-        <canvas class="widget" id="a1"></canvas>
+        <div class="bw-col-3 wheight">
+          <canvas class="widget" id="m1"></canvas>
+        </div>
+
+        <div class="bw-col-3 wheight">
+          <div class="widget">
+            <img id="bonesLateral" style="width: 100%; height: 100%" />
+          </div>
+        </div>
       </div>
 
-      <div class="bw-col-2 wheight">
-        <canvas class="widget" id="g1"></canvas>
-      </div>
+      <div class="bw-row bw-col-12 sepHeight"></div>
 
-      <div class="bw-col-2 wheight">
-        <canvas class="widget" id="m1"></canvas>
-      </div>
+      <!-- 3rd row -->
+      <div class="bw-row bw-col-12 defHeight">
+        <div class="bw-col-3 wheight">
+          <canvas class="widget" id="sn"></canvas>
+        </div>
+        <div class="bw-col-3 wheight">
+          <canvas class="widget" id="flexion"></canvas>
+        </div>
+        <div class="bw-col-3 wheight">
+          <canvas class="widget" id="tilt_rot"></canvas>
+        </div>
 
-      <div class="bw-col-2 wheight">
-          <div class="widget" id="o1"></div>
-
-        <!-- <div class="widget"><img id="bonesLateral" style="width:100%;height:100%"></img></div>
-        -->
-      </div>
-      <div class="bw-col-2 wheight">
-          <div class="widget" id="mo1"></div>
-      </div>
-    </div>
-
-    <div class="bw-row bw-col-12 sepHeight"></div>
-
-    <!-- 3rd row -->
-    <div class="bw-row bw-col-12 defHeight">
-      <div class="bw-col-2 wheight">
-        <canvas class="widget" id="sn"></canvas>
-      </div>
-      <div class="bw-col-2 wheight">
-        <canvas class="widget" id="flexion"></canvas>
-      </div>
-      <div class="bw-col-2 wheight">
-        <canvas class="widget" id="tilt_rot"></canvas>
-      </div>
-
-      <div class="bw-col-2 wheight">
+        <div class="bw-col-3 wheight">
           <div class="widget" id="empty"></div>
-      </div>
+        </div>
 
-      <div class="bw-col-2 wheight">
-        <div class="widget" id="ahrs"></div>
       </div>
     </div>
+    <script defer src="main.js"></script>
 
-  </div>
-  </div>
-  <script defer src="main.js"></script>
-
-  <!-- BLE support -->
-  <script src="./libs/uart.js"></script>
-  <script src="./libs/k1-btdata.js"></script>
-</body>
-
+    <!-- BLE support -->
+    <script src="./libs/uart.js"></script>
+    <script src="./libs/k1-btdata.js"></script>
+  </body>
 </html>

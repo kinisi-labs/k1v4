@@ -1,3 +1,4 @@
+/*
 let context0 = createThreeContext();
 context0.init3D("o0");
 let context1 = createThreeContext();
@@ -7,6 +8,7 @@ let mag0Context = createThreeContext();
 mag0Context.init3D("mo0");
 let mag1Context = createThreeContext();
 mag1Context.init3D("mo1");
+*/
 
 function getOrientation(a, m) {
   const mahony = new AHRS({
@@ -47,15 +49,13 @@ function quatToString(q, d) {
     d = 2;
   }
   return (
-    "[" +
     q.w.toFixed(d) +
     ", " +
     q.x.toFixed(d) +
     ", " +
     q.y.toFixed(d) +
     ", " +
-    q.z.toFixed(d) +
-    "]"
+    q.z.toFixed(d)
   );
 }
 function getV1SleeveDataTransformFunction(calibration) {
@@ -298,7 +298,8 @@ const CALIBRATIONS = {
       },
       m0: {
         scale: vectorScale([1, 1, 1], 0.01),
-        offset: [-273.12190245, 14.19906521, -5.312774659999999] },
+        offset: [-273.12190245, 14.19906521, -5.312774659999999],
+      },
       m1: {
         scale: vectorScale([1, 1, -1], 0.01),
         offset: [-17.40000057, 0.8999996150000023, -16.875000955],
@@ -306,8 +307,27 @@ const CALIBRATIONS = {
       },
     },
   },
-
+  "kinisi-labs-k1x-5d7d93": {
+    sensorTransforms: {
+      a1: { scale: [-1, 1, 1], rearrange: [1, 0, 2] },
+      g0: {
+        offset: [-0.6232007765513198, -0.6159456237609972, 0.01750728957624639],
+      },
+      g1: {
+        scale: [-1, 1, 1],
+        offset: [-0.3232435718753665, 0.4898353812565982, 0.491359942521994],
+        rearrange: [1, 0, 2],
+      },
+      m0: { offset: [-337.3209381, -8.206663135, -3.59543991] },
+      m1: {
+        scale: [1, 1, -1],
+        offset: [7.350000384999998, -14.399999615, -22.05000019],
+        rearrange: [1, 0, 2],
+      },
+    },
+  },
 };
+
 // TODO: get calibration from somewhere else
 let calibration = CALIBRATIONS["kinisi-labs-k1x-f1bcad"];
 
@@ -324,11 +344,11 @@ const maxlen = 120; // chart len in points
 
 let a0 = newChartJSLineChart("#a0", 3, "Thigh Accel", maxlen, [-20, 20]);
 let g0 = newChartJSLineChart("#g0", 3, "Thigh Gyro", maxlen, [-10, 10]);
-let m0 = newChartJSLineChart("#m0", 4, "Thigh Mags", maxlen, [-2, 2]);
+let m0 = newChartJSLineChart("#m0", 3, "Thigh Mags", maxlen, [-2, 2]);
 
 let a1 = newChartJSLineChart("#a1", 3, "Calf Accel", maxlen, [-20, 20]);
 let g1 = newChartJSLineChart("#g1", 3, "Calf Gyro", maxlen, [-10, 10]);
-let m1 = newChartJSLineChart("#m1", 4, "Calf Mags", maxlen, [-2, 2]);
+let m1 = newChartJSLineChart("#m1", 3, "Calf Mags", maxlen, [-2, 2]);
 
 let sn = newChartJSLineChart("#sn", 1, "Sound Energy", maxlen, [0, 250]);
 let snAvg = 0;
@@ -345,9 +365,9 @@ let flexion = newChartJSLineChart(
 let accel_chart = newChartJSLineChart(
   "#tilt_rot",
   2,
-  "Thigh and Calf Acceleration",
+  "Tilt and Rotation",
   maxlen,
-  [-50, 50],
+  [-150, 150],
 );
 
 //let o0 = newChartJSLineChart("#o0", 3, "Orientation 0", maxlen, [-200, 200]);
@@ -369,6 +389,7 @@ let calfRPY = [0, 0, 0];
 let ahrs_init = false;
 
 let cnt = 0;
+let deviceName = "";
 //update renderings
 setInterval(function () {
   let cntOld = cnt;
@@ -378,11 +399,19 @@ setInterval(function () {
     return;
   }
 
+  if (gBLE && gBLE.deviceName && gBLE.deviceName != deviceName) {
+    deviceName = gBLE.deviceName;
+    if (deviceName in CALIBRATIONS) {
+      calibration = CALIBRATIONS[deviceName];
+      console.log("Using calibration for " + deviceName, calibration);
+      transformFunction = getV1SleeveDataTransformFunction(calibration);
+    }
+  }
   let transformed;
   for (let idx = cntOld; idx < cnt; idx++) {
     var gd = JSON.parse(JSON.stringify(gDataStorage.data[idx]));
 
-    if ("a0" in gDataStable) {
+    if ("a0" in gd) {
       transformed = transformFunction(gd);
     }
   }
@@ -392,12 +421,15 @@ setInterval(function () {
       true,
     );
 
+
+    /*
     context0.update3d(transformed.thighQuat);
     context1.update3d(transformed.calfQuat);
     mag0Context.update3d(getOrientation(transformed.gd.a0, transformed.gd.m0));
     mag1Context.update3d(getOrientation(transformed.gd.a1, transformed.gd.m1));
+    */
 
-    bw.DOM("#ahrs")[0].innerHTML =
+    bw.DOM("#empty")[0].innerHTML =
       "flexion: " +
       transformed.flexion +
       "<br>" +
@@ -407,8 +439,9 @@ setInterval(function () {
       "rotn: " +
       transformed.rotation +
       "<br>" +
+      /*
       "magDotProd: " +
-      vectorDot(transformed.gd.m0, transformed.gd.m1) +
+      vectorDot(transformed.gd.m0, transformed.gd.m1) + */
       "<br>" +
       "angleQuat: " +
       quatToString(transformed.angleQuat) +
@@ -418,13 +451,16 @@ setInterval(function () {
       "<br>" +
       "calfQuat: " +
       quatToString(transformed.calfQuat) +
-      "<br>" +
+      "<br>";
+
+      /*
       "latitude: " +
       gDataStable.g_lat +
       "<br>" +
       "longitude: " +
       gDataStable.g_lon +
       "<br>";
+      */
   }
 
   if (transformed) {
@@ -436,7 +472,6 @@ setInterval(function () {
     if ("g0" in gDataStable) g0.updateChart(transformed.gd["g0"], true);
 
     if ("m0" in gDataStable) {
-      console.log(transformed.gd["m0"][1]);
       m0.updateChart(transformed.gd["m0"], true);
     }
 
@@ -455,6 +490,8 @@ setInterval(function () {
       snDCEnergy = snAvg * (1 - alphaDC) + gDataStable["sn"] * alphaDC;
       sn.updateChart([gDataStable["sn"]], true);
     }
+    renderKneeBonesAngle("#bonesFront", transformed.flexion[0], "front", "right");
+    renderKneeBonesAngle("#bonesLateral", transformed.flexion[0], "lateral", "right");
   }
 
   // stats area refresh
