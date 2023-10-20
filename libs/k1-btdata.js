@@ -36,7 +36,7 @@ var doBLEdisconnect = function () {
 
 if (sim != "false") {
     if (sim == "load") {
-        bw.getJSONFile("k1x-sensor-data3.json", function (d) {
+        bw.getJSONFile("k1x-sensor-data.json", function (d) {
             simData = JSON.parse(d);
             gDataStorage.sessionHeight = simData.sessionHeight;
             gDataStorage.sessionWeight = simData.sessionWeight;
@@ -47,19 +47,25 @@ if (sim != "false") {
             gBLE.connected = true;
             gBLE.buf = "";
             gBLE.jsonRec = { "recTime": (new Date()).getTime() };
+            let simTime = 0;
             setInterval(function () {
-                gBLE.jsonRec.data = simData.data[simDataTick];
-                gDataStorage.packetInfo.numPackets = (gDataStorage.packetInfo.numPackets || 0) + 1;
-                gDataStorage.packetInfo.numBytes = (gDataStorage.packetInfo.numBytes || 0) + JSON.stringify(gBLE.jsonRec.data).length;
-                gDataStorage.startTime = (gDataStorage.startTime || (new Date()).getTime());
-                gDataStorage.curTime = (new Date()).getTime();
-                gDataStorage.packetInfo.elapsedTime = (gDataStorage.curTime - gDataStorage.startTime) / 1000;
-                gDataStorage.packetInfo.avgPacketSize = gDataStorage.packetInfo.numBytes / gDataStorage.packetInfo.numPackets;
-                gDataStorage.packetInfo.avgPacketsPerSec = gDataStorage.packetInfo.numPackets / (gDataStorage.packetInfo.elapsedTime);
-                gDataStorage.packetInfo.avgBytesPerSec = gDataStorage.packetInfo.numBytes / (gDataStorage.packetInfo.elapsedTime);
+                let timeDiff = 1;
+                while (timeDiff < 50 && timeDiff >= 0) {
+                    gBLE.jsonRec.data = simData.data[simDataTick];
+                    gDataStorage.packetInfo.numPackets = (gDataStorage.packetInfo.numPackets || 0) + 1;
+                    gDataStorage.packetInfo.numBytes = (gDataStorage.packetInfo.numBytes || 0) + JSON.stringify(gBLE.jsonRec.data).length;
+                    gDataStorage.startTime = (gDataStorage.startTime || (new Date()).getTime());
+                    gDataStorage.curTime = (new Date()).getTime();
+                    gDataStorage.packetInfo.elapsedTime = (gDataStorage.curTime - gDataStorage.startTime) / 1000;
+                    gDataStorage.packetInfo.avgPacketSize = gDataStorage.packetInfo.numBytes / gDataStorage.packetInfo.numPackets;
+                    gDataStorage.packetInfo.avgPacketsPerSec = gDataStorage.packetInfo.numPackets / (gDataStorage.packetInfo.elapsedTime);
+                    gDataStorage.packetInfo.avgBytesPerSec = gDataStorage.packetInfo.numBytes / (gDataStorage.packetInfo.elapsedTime);
 
-                updateData(simData.data[simDataTick]);
-                simDataTick = (simDataTick + 1) % simData.data.length;
+                    updateData(simData.data[simDataTick]);
+                    simDataTick = (simDataTick + 1) % simData.data.length;
+                    timeDiff = simData.data[simDataTick].t_s - simTime;
+                };
+                simTime = simData.data[simDataTick].t_s;
             }, 50);
 
         });
@@ -130,7 +136,7 @@ var gBLEcallback = function (d) {
 var asmPacket = function (s, accum) {
     s = bw.toa(s, "string", s, "");
     accum = bw.toa(accum, "string", accum, "");
-    console.log("msg", s);
+    //console.log("msg", s);
 
     accum += s;
 

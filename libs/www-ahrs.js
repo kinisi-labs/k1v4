@@ -406,6 +406,11 @@ module.exports = function Mahony(sampleInterval, options) {
   let integralFBx = 0.0,
     integralFBy = 0.0,
     integralFBz = 0.0; // integral error terms scaled by Ki
+  let feedback = {
+    gyro: [0, 0, 0],
+    proportional: [0, 0, 0],
+    integral: [0, 0, 0]
+  };
 
   //= ===================================================================================================
   // Functions
@@ -628,6 +633,7 @@ module.exports = function Mahony(sampleInterval, options) {
       halfey = az * halfvx - ax * halfvz + (mz * halfwx - mx * halfwz);
       halfez = ax * halfvy - ay * halfvx + (mx * halfwy - my * halfwx);
 
+
       // Compute and apply integral feedback if enabled
       if (twoKi > 0.0) {
         integralFBx += twoKi * halfex * recipSampleFreq; // integral error scaled by Ki
@@ -641,6 +647,24 @@ module.exports = function Mahony(sampleInterval, options) {
         integralFBy = 0.0;
         integralFBz = 0.0;
       }
+
+      feedback = {
+        proportional: [
+          0.5 * halfex * twoKp * recipSampleFreq,
+          0.5 * halfey * twoKp * recipSampleFreq,
+          0.5 * halfez * twoKp * recipSampleFreq
+        ],
+        gyro: [
+          0.5 * gx * recipSampleFreq,
+          0.5 * gy * recipSampleFreq,
+          0.5 * gz * recipSampleFreq
+        ],
+        integral: [
+          0.5 * integralFBx * recipSampleFreq,
+          0.5 * integralFBy * recipSampleFreq,
+          0.5 * integralFBz * recipSampleFreq
+        ]
+      };
 
       // Apply proportional feedback
       gx += twoKp * halfex;
@@ -671,6 +695,9 @@ module.exports = function Mahony(sampleInterval, options) {
   return {
     update: mahonyAHRSUpdate,
     init,
+    getFeedback() {
+      return feedback;
+    },
     getQuaternion() {
       return {
         w: q0,

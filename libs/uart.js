@@ -153,6 +153,7 @@
           ], optionalServices: [ NORDIC_SERVICE ]}).then(function(device) {
         log(1, 'Device Name:       ' + device.name);
         log(1, 'Device ID:         ' + device.id);
+            connection.deviceName = device.name;
         // Was deprecated: Should use getPrimaryServices for this in future
         //log('BT>  Device UUIDs:      ' + device.uuids.join('\n' + ' '.repeat(21)));
         device.addEventListener('gattserverdisconnected', function() {
