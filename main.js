@@ -318,10 +318,28 @@ const CALIBRATIONS = {
         offset: [-0.3232435718753665, 0.4898353812565982, 0.491359942521994],
         rearrange: [1, 0, 2],
       },
-      m0: { offset: [-337.3209381, -8.206663135, -3.59543991] },
+      m0: {
+        offset: [-328.6989735164113, -9.865796760562827, -2.403638406816011],
+        transformMatrix: [
+          [0.011833104289718496, 0.000727278112711297, -0.0001548350743102835],
+          [0.0007272781127112964, 0.011570043718863733, 8.684721686488166e-5],
+          [-0.0001548350743102837, 8.684721686488234e-5, 0.011864937728149208],
+        ],
+      },
       m1: {
         scale: [1, 1, -1],
-        offset: [7.350000384999998, -14.399999615, -22.05000019],
+        offset: [4.0203173849676475, -19.874866227534795, -22.644395290463695],
+        transformMatrix: [
+          [0.01132169996681554, -0.00018317745268216917, -0.000246487694880817],
+          [
+            -0.00018317745268216942, 0.011555336940621644,
+            -3.011569566486821e-5,
+          ],
+          [
+            -0.00024648769488081607, -3.0115695664868256e-5,
+            0.012243950671639414,
+          ],
+        ],
         rearrange: [1, 0, 2],
       },
     },
@@ -329,7 +347,7 @@ const CALIBRATIONS = {
 };
 
 // TODO: get calibration from somewhere else
-let calibration = CALIBRATIONS["kinisi-labs-k1x-f1bcad"];
+let calibration = CALIBRATIONS["kinisi-labs-k1x-5d7d93"];
 
 let transformFunction = getV1SleeveDataTransformFunction(calibration);
 
@@ -344,11 +362,11 @@ const maxlen = 120; // chart len in points
 
 let a0 = newChartJSLineChart("#a0", 3, "Thigh Accel", maxlen, [-20, 20]);
 let g0 = newChartJSLineChart("#g0", 3, "Thigh Gyro", maxlen, [-10, 10]);
-let m0 = newChartJSLineChart("#m0", 3, "Thigh Mags", maxlen, [-2, 2]);
+let m0 = newChartJSLineChart("#m0", 4, "Thigh Mags", maxlen, [-2, 2]);
 
 let a1 = newChartJSLineChart("#a1", 3, "Calf Accel", maxlen, [-20, 20]);
 let g1 = newChartJSLineChart("#g1", 3, "Calf Gyro", maxlen, [-10, 10]);
-let m1 = newChartJSLineChart("#m1", 3, "Calf Mags", maxlen, [-2, 2]);
+let m1 = newChartJSLineChart("#m1", 4, "Calf Mags", maxlen, [-2, 2]);
 
 let sn = newChartJSLineChart("#sn", 1, "Sound Energy", maxlen, [0, 250]);
 let snAvg = 0;
@@ -421,7 +439,6 @@ setInterval(function () {
       true,
     );
 
-
     /*
     context0.update3d(transformed.thighQuat);
     context1.update3d(transformed.calfQuat);
@@ -453,7 +470,7 @@ setInterval(function () {
       quatToString(transformed.calfQuat) +
       "<br>";
 
-      /*
+    /*
       "latitude: " +
       gDataStable.g_lat +
       "<br>" +
@@ -472,7 +489,10 @@ setInterval(function () {
     if ("g0" in gDataStable) g0.updateChart(transformed.gd["g0"], true);
 
     if ("m0" in gDataStable) {
-      m0.updateChart(transformed.gd["m0"], true);
+      m0.updateChart(
+        [...transformed.gd.m0, vectorMag(transformed.gd.m0)],
+        true,
+      );
     }
 
     if ("a1" in gDataStable) a1.updateChart(transformed.gd["a1"], true);
@@ -480,7 +500,10 @@ setInterval(function () {
     if ("g1" in gDataStable) g1.updateChart(transformed.gd["g1"], true);
 
     if ("m1" in gDataStable) {
-      m1.updateChart(transformed.gd["m1"], true);
+      m1.updateChart(
+        [...transformed.gd.m1, vectorMag(transformed.gd.m1)],
+        true,
+      );
     }
 
     if ("sn" in gDataStable) {
@@ -490,8 +513,18 @@ setInterval(function () {
       snDCEnergy = snAvg * (1 - alphaDC) + gDataStable["sn"] * alphaDC;
       sn.updateChart([gDataStable["sn"]], true);
     }
-    renderKneeBonesAngle("#bonesFront", transformed.flexion[0], "front", "right");
-    renderKneeBonesAngle("#bonesLateral", transformed.flexion[0], "lateral", "right");
+    renderKneeBonesAngle(
+      "#bonesFront",
+      transformed.flexion[0],
+      "front",
+      "right",
+    );
+    renderKneeBonesAngle(
+      "#bonesLateral",
+      transformed.flexion[0],
+      "lateral",
+      "right",
+    );
   }
 
   // stats area refresh
