@@ -101,9 +101,11 @@ var timingDiffs = function () {
 
 var gBLEcallback = function (d) {
     gBLE.buf = asmPacket(d, gBLE.buf);
+    console.log("buf", gBLE.buf);
     gBLE.raw = d;
     try { // try JSON decode ...
         if (gBLE.buf[0] == "{" && gBLE.buf[gBLE.buf.length - 1] == "}") {
+            console.log("buf", gBLE.buf);
             gBLE.jsonRec["data"] = JSON.parse(gBLE.buf);
             var t = (new Date()).getTime();
             gBLE.jsonRec["delTime"] = t - gBLE.jsonRec["recTime"];
@@ -118,11 +120,17 @@ var gBLEcallback = function (d) {
             gDataStorage.packetInfo.avgPacketsPerSec = gDataStorage.packetInfo.numPackets / (gDataStorage.packetInfo.elapsedTime);
             gDataStorage.packetInfo.avgBytesPerSec = gDataStorage.packetInfo.numBytes / (gDataStorage.packetInfo.elapsedTime);
 
+            gBLE.buf = "";
         }
-        else
-            gBLE.jsonRec = {}
+        else {
+            gBLE.jsonRec = {};
+        }
     }
-    catch (e) { gBLE.jsonRec = {}; console.log("asm-packet parse error : " + gBLE.buf)}
+    catch (e) {
+        gBLE.jsonRec = {};
+        console.log("asm-packet parse error : " + gBLE.buf);
+        gBLE.buf = "";
+    }
     //bw.DOM("#raw",gBLE.buf);
     updateData(gBLE.jsonRec); // callback with fully assembled json data available now.
 
@@ -140,7 +148,7 @@ var asmPacket = function (s, accum) {
         i = accum.indexOf("<?");
 
         if (i >= 0) {
-            accum = accum.substr(2, i - 2);
+            accum = accum.substr(2, i-2);
         }
     }
 
