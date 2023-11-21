@@ -120,7 +120,7 @@ var gBLEcallback = function (d) {
         else
             gBLE.jsonRec = {}
     }
-    catch (e) { gBLE.jsonRec = {}; console.log("asm-packet parse error : " + gBLE.buf) }
+    catch (e) { gBLE.jsonRec = {}; console.log("asm-packet parse error : " + gBLE.buf) ; gBLE.buf = "";}
     //bw.DOM("#raw",gBLE.buf);
     updateData(gBLE.jsonRec); // callback with fully assembled json data available now.
 
