@@ -125,6 +125,11 @@ var gBLEcallback = function (d) {
     updateData(gBLE.jsonRec); // callback with fully assembled json data available now.
 
 }
+
+// here is a regex based packet assembler
+// it is not used in this example, but is included for reference
+// datagram = buffer.match(/(?<=>)([\s\S]*?)(?=<\?)/g)
+// if (datagram
 var asmPacket = function (s, accum) {
     s = bw.toa(s, "string", s, "");
     accum = bw.toa(accum, "string", accum, "");
