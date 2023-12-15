@@ -4,6 +4,7 @@
 // raw data in gBLE.jsonRec;
 
 //BLE data fetch for k1 
+
 var gBLE = { connected: false };
 var gDataStable = {}; // last full json record 
 var gDataStorage = { max: 22 * 60 * 60, data: [], packetInfo: {}, pageStartTime: (new Date()).getTime() };
@@ -17,7 +18,7 @@ var simDataTick = 0; // packet Tick Incrementer
 
 
 var doBLEConnect = function () {
-    console.log("attempting to connect...");
+    dbgconsole("attempting to connect...");
     UART.connect(function (d) {
         gBLE = d;
         gBLE.connected = true;
@@ -101,11 +102,11 @@ var timingDiffs = function () {
 
 var gBLEcallback = function (d) {
     gBLE.buf = asmPacket(d, gBLE.buf);
-    console.log("buf", gBLE.buf);
+    dbgconsole("buf", gBLE.buf);
     gBLE.raw = d;
     try { // try JSON decode ...
         if (gBLE.buf[0] == "{" && gBLE.buf[gBLE.buf.length - 1] == "}") {
-            console.log("buf", gBLE.buf);
+            dbgconsole("buf", gBLE.buf);
             gBLE.jsonRec["data"] = JSON.parse(gBLE.buf);
             var t = (new Date()).getTime();
             gBLE.jsonRec["delTime"] = t - gBLE.jsonRec["recTime"];
@@ -128,7 +129,7 @@ var gBLEcallback = function (d) {
     }
     catch (e) {
         gBLE.jsonRec = {};
-        console.log("asm-packet parse error : " + gBLE.buf);
+        dbgconsole("asm-packet parse error : " + gBLE.buf);
         gBLE.buf = "";
     }
     //bw.DOM("#raw",gBLE.buf);
@@ -138,7 +139,7 @@ var gBLEcallback = function (d) {
 var asmPacket = function (s, accum) {
     s = bw.toa(s, "string", s, "");
     accum = bw.toa(accum, "string", accum, "");
-    console.log("msg", s);
+    dbgconsole("msg", s);
 
     accum += s;
 
@@ -159,7 +160,7 @@ function btnGetInfo() {
 
 }
 function btnResetDataStorage() {
-    console.log("resetting data storage")
+    dbgconsole("resetting data storage")
     gDataStorage.pageStartTime = (new Date()).getTime()
     gDataStorage.data = [];
 
@@ -198,11 +199,11 @@ function btnLoadData() {
         // here we tell the reader what to do when it's done reading...
         reader.onload = readerEvent => {
             var content = readerEvent.target.result; 
-            //console.log(content);
+            //dbgconsole(content);
             // do the stuff in simData load section
             gDataStorage = JSON.parse(content);
-            console.log(gDataStorage);
-            console.log("... HERE ...")
+            dbgconsole(gDataStorage);
+            dbgconsole("... HERE ...")
             gDataStorage.packetInfo= { numBytes:0, numPackets:0};
             gDataStorage.pageStartTime = (new Date()).getTime();
 

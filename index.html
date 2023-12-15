@@ -342,7 +342,7 @@
              thighMahony.init(...gd.a0, ...gd.m0);
            } else if (intervalCnt % magFreq === 0) {
              thighMahony.update(...gd.g0, ...gd.a0, ...gd.m0, dt);
-             console.log("Used mag 1");
+             dbgconsole("Used mag 1");
            } else {
              thighMahony.update(...gd.g0, ...gd.a0, dt);
            }
@@ -360,7 +360,7 @@
              calfMahony.init(...gd.a1, ...gd.m1);
            } else if (intervalCnt % magFreq === 0) {
              calfMahony.update(...gd.g1, ...gd.a1, ...gd.m1, dt);
-             console.log("Used mag 2");
+             dbgconsole("Used mag 2");
            } else {
              calfMahony.update(...gd.g1, ...gd.a1, dt);
            }
@@ -415,7 +415,7 @@
       bw.DOM("#infobarcontainer")[0].style.display = "block";
     }
     else {
-      console.log("Test");
+      dbgconsole("Test");
       bw.DOM("#infobarcontainer")[0].style.display = "none";
     }
     bw.getURLParam("showstats", "true")
@@ -460,11 +460,11 @@
     setInterval(function () {
 
       var gd = gDataStable;
-      console.log(gd);
+      dbgconsole(gd);
 
       if ("a0" in gDataStable) {
           let transformed = transformFunction(gd);
-          console.log(transformed);
+          dbgconsole(transformed);
           flexion.updateChart(transformed.flexion, true);
           tilt_rot.updateChart([...transformed.tilt, ...transformed.rotation], true);
 

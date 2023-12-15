@@ -1,4 +1,6 @@
 //sensordata.js
+var dbg = bw.getURLParam("dbg", "false");
+var dbgconsole = (dbg == "true") ? console.log : function () { } // dummy console;
 
 //===================================
 /*
