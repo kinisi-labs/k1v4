@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Radar Chart Example</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        canvas {
+            width: 600px;
+            height: 600px;
+            margin: 0 auto;
+        }
+    </style>
+</head>
+
+<body>
+
+<canvas id="myChart"></canvas>
+
+<script>
+    // Data for the radar chart
+    const radarDefaultData = {
+        labels: ['Thich Accel',  'Calf Accel', 'Total Accel','Thigh Force','Calf Force', 'Total Force'],
+        datasets: [{
+            label: 'Kinisi Radar Score',
+            data: [20, 30, 40, 50, 60, 70],
+            fill: true,
+            backgroundColor: 'rgba(55  , 99, 132, 0.2)',
+            borderColor: 'rgb(199, 99, 132)',
+            pointBackgroundColor: 'rgb(255, 99, 132)',
+            pointBorderColor: '#fff',
+            pointHoverBackgroundColor: '#fff',
+            pointHoverBorderColor: 'rgb(255, 99, 132)'
+        }]
+    };
+
+    // Configurations for the radar chart
+    const radarDefaultConfig = {
+        type: 'radar',
+        data: radarDefaultData,
+        options: {
+            elements: {
+                line: {
+                    borderWidth: 2
+                }
+            },
+            scales: {
+                r: {
+                    min: 0,
+                    max: 100,
+                    ticks: {
+                        stepSize: 10
+                    }
+                }
+            }
+        }
+       
+    };
+
+    // Initialize the radar chart
+    const radarChart = new Chart(
+        document.getElementById('myChart'),
+        radarDefaultConfig
+    );
+
+    // Function to update the chart
+    function updateChartData(radarChart) {
+        radarChart.data.datasets.forEach((dataset) => {
+            dataset.data = dataset.data.map(() => Math.floor(Math.random() * 100)); // Replace each data point with a new random value
+        });
+        radarChart.update();
+    }
+
+    // Update the chart every second
+    setInterval(() => {
+        updateChartData(radarChart);
+    }, 333);
+</script>
+
+</body>
+</html>
