@@ -7,23 +7,32 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         canvas {
-            width: 600px;
-            height: 600px;
+            height: 100%;
+            width : 100%;
             margin: 0 auto;
+            border: 1px solid #6a2222;
+            border-radius: 5%;
+        }
+        #chart-container {
+            position: absolute;
+            margin: auto;
+            height: 30vh;
+            width : 30vw;
+            border: 1px solid #0b0101;
         }
     </style>
 </head>
 
 <body>
-
-<canvas id="myChart"></canvas>
-
+    <div id="chart-container">
+        <canvas id="myChart"></canvas>
+    </div>
 <script>
     // Data for the radar chart
     const radarDefaultData = {
-        labels: ['Thich Accel',  'Calf Accel', 'Total Accel','Thigh Force','Calf Force', 'Total Force'],
+        labels: ['TAccl',  'CAccl', 'TtlAccl','TForce','CForce', 'TForce'],
         datasets: [{
-            label: 'Kinisi Radar Score',
+            label: 'Kinisi K-Score',
             data: [20, 30, 40, 50, 60, 70],
             fill: true,
             backgroundColor: 'rgba(55  , 99, 132, 0.2)',
