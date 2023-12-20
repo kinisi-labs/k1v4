@@ -243,7 +243,7 @@ let newChartJSRadarChart = function (domEl, labels, title, maxXLen, yrange = nul
         let i;
         if (values) {
             for (i = 0; i < values.length; i++) {
-                chart.data.datasets[0].data[i] = rangeMapper(values[i], -10, 10, 0, 100, 3);
+                chart.data.datasets[0].data[i] = rangeMapper(values[i], -15, 25, 0, 100, 3);
             };
         }
         if (render)
