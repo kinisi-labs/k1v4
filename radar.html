@@ -451,36 +451,28 @@
       var gd = gDataStable;
       //console.log(gd);
 
-      if ("a0" in gDataStable) {
-        let transformed = transformFunction(gd);
-        //console.log(transformed);
-        flexion.updateChart(bw.mapScale (transformed.flexion, -180, 180, -50,120), true);
-        tilt_rot.updateChart([...transformed.tilt, ...transformed.rotation], true);
-
-        /*
-        "thighQuat: " + thighQuat.map(x => x.toFixed(2)) + "<br>" +
-        "calfQuat: " + calfQuat.map(x => x.toFixed(2)) + "<br>" +
-        "thighRPY: " + thighRPY.map(x => x.toFixed(2).padStart(7)).join(", ") + "<br>" +
-
-        "calfRPY: " + calfRPY.map(x => x.toFixed(2).padStart(7)).join(", ") + "<br>" +
-           */
-        bw.DOM("#ahrs")[0].innerHTML =
-          "Sleeve calibration data not found. <br>" +
-          /* 
-          "flexion: " + Number(transformed.flexion).toFixed(3) + "<br>" +
-          "tilt: " + Number(transformed.tilt).toFixed(3) + "<br>" +
-          "rotn: " + Number(transformed.rotation).toFixed(3) + "<br>" +
-          */
-          "latitude: GPS not enabled"   + "<br>" +
-          "longitude: GPS not enabled" + "<br>";
-
-        //o0.updateChart(transformed.thighRPY, true);
-        //o1.updateChart(transformed.calfRPY, true);
-        //o0.updateChart([transformed.thighQuat.x, transformed.thighQuat.y, transformed.thighQuat.z]);
-
+      if ("a0" in gDataStable && "a1" in gDataStable) {
+        let flexAngle = vectorAngle(vectorNorm(gDataStable.a0), vectorNorm(gDataStable.a1), true);
+        gDataStable.flexAngle = flexAngle;
+        //flexion angle
+        //renderKneeBonesAngle("#bonesFront", flexAngle, "front", "right")
+        //renderKneeBonesAngle("#bonesLateral", flexAngle, "lateral", "right")
+        flexion.updateChart([flexAngle], true);
+        gDataStable.tiltAngle = vectorAngle(vectorNorm(gDataStable.a0), vectorRot(vectorNorm(gDataStable.a1), mrotz), true);
+        gDataStable.rotAngle = vectorAngle(vectorNorm(gDataStable.a0), vectorRot(vectorNorm(gDataStable.a1), mroty), true);
+        tilt_rot.updateChart([gDataStable.tiltAngle, gDataStable.rotAngle], true);
         o1.updateChart([gd.a0[0], gd.a0[1], gd.a0[2], gd.a1[0], gd.a1[1], gd.a1[2]]);
+        bw.DOM("#ahrs")[0].innerHTML =
+            "flexion: " + gDataStable.flexAngle.toFixed(2) + "<br>" +
+            "tilt: " + gDataStable.tiltAngle.toFixed(2) + "<br>" +
+            "rotn: " + gDataStable.rotAngle.toFixed(2) + "<br>" ;
+           // "thighQuat: " + thighQuat.map(x => x.toFixed(2)) + "<br>" +
+           // "calfQuat: " + calfQuat.map(x => x.toFixed(2)) + "<br>"+
+           // "thighRPY: " + thighRPY.map(x => x.toFixed(2).padStart(7)).join(", ") + "<br>" +
+           // "calfRPY: " + calfRPY.map(x => x.toFixed(2).padStart(7)).join(", ") + "<br>";
 
       }
+      
       if ("a0" in gDataStable)
         a0.updateChart(gDataStable["a0"], true);
 
