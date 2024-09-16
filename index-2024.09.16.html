@@ -21,13 +21,12 @@
   <script src="./libs/sensordata.js"></script>
   <script src="./libs/www-ahrs.js"></script>
   <!-- <script src="./libs/mc-ahrs.js"></script> -->
-  <script src="./libs/mc-ahrs2.js"></script>
   <link
     href="data:image/x-icon;base64,AAABAAEAEBAQAAEABAAoAQAAFgAAACgAAAAQAAAAIAAAAAEABAAAAAAAgAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAlv//AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAAAAAAAAABAAAAAAAAAAEQAAAAAAAAARAAAAAAAAABEQAAAAAAARERAAAAAAAAERAAAAAAAAAREAAAAAAAABERAAAAAAAAAREAAAAAAAABERAAAAAAAAEREAAAAAAAAAAAAAD9/wAA/f8AAPz/AAD8fwAA/H8AAPw/AAD8PwAA8B8AAPAPAAD4DwAA+D8AAPgfAAD8HwAA/A8AAPwPAAD8DwAA"
     rel="icon" type="image/x-icon" />
   <!-- 3D rendering -->
   <script src="./libs/3d-functions.js"></script>
-  <script src="./libs/quaternion.min.js"></script>
+  <script src="./libs/quaternion2.min.js"></script>
   <!--
   <script> bw.DOMInsertElement("head", bw.htmlFavicon("⚡", "black"))
     // running preson :  &#127939 
@@ -168,17 +167,20 @@
         <div class="status-inner">
           <img class="kinisi-color kinisi-logo" src="./assets/Kinisi-Logo.svg" width="180"></img>
         </div>
-        <span class="tagline">K1X Portable Motion Lab : Knee Explorer</span>
+        <span class="tagline">K1X Portable Motion Lab</span>
       </div>
     </div>
     <div class="bw-row">
       <div class="bw-col-12 buttonbar">
         <label class="sessionLabel" for="sessionNameN">Session Name:</label>
         <textarea id="sessionName" name="sessionNameN" rows="1" cols="20" class="sessionText"></textarea>
+        &nbsp;&nbsp;&nbsp;
         <label class="sessionLabel" for="sessionHeightN">Height (cm):</label>
-        <textarea id="sessionHeight" name="sessionHeightN" rows="1" cols="8" class="sessionText"></textarea>
+        <textarea id="sessionHeight" name="sessionHeightN" rows="1" cols="6" class="sessionText"></textarea>
+        &nbsp;&nbsp;&nbsp;
         <label class="sessionLabel" for="sessionWeighttN">Weight (kg):</label>
-        <textarea id="sessionWeight" name="sessionWeighttN" rows="1" cols="8" class="sessionText"></textarea>
+        <textarea id="sessionWeight" name="sessionWeighttN" rows="1" cols="6" class="sessionText"></textarea>
+        <button class="buttonStuff" onclick="btnLoadData()">Load Data</button>
         <button class="buttonStuff" onclick="btnResetDataStorage()">Reset Data</button>
         <button class="buttonStuff" onclick="btnSaveData()">Export Data</button>
       </div>
@@ -202,10 +204,10 @@
       </div>
 
       <div class="bw-col-3 wheight">
-      <!--  <canvas class="widget" id="o0"></canvas> -->
-        
+        <canvas class="widget" id="o0"></canvas>
+        <!--
         <div class="widget"><img id="bonesFront" style="width:100%;height:100%"></img></div>
-    
+        -->
       </div>
 
     </div>
@@ -227,11 +229,11 @@
       </div>
 
       <div class="bw-col-3 wheight">
-       <!-- <canvas class="widget" id="o1"></canvas> -->
+        <canvas class="widget" id="o1"></canvas>
 
-        
+        <!--
         <div class="widget"><img id="bonesLateral" style="width:100%;height:100%"></img></div>
-       
+       -->
       </div>
     </div>
 
@@ -258,11 +260,162 @@
   </div>
   <script type="text/javascript">
 
+    function vectorSubtract(v1, v2) {
+      return v1.map((v, i) => v - v2[i]);
+    }
+
+    function vectorMag(a) {
+      if (Array.isArray(a)) return Math.sqrt(a.reduce((s, x) => s + x * x, 0));
+      return Number(a);
+    }
+   function getV1SleeveDataTransformFunction() {
+     // how fast should rotation/flexion trend toward 0
+     let slerpPctPerSec = 0.3;
+
+     let kp = 2;
+     let ki = 0.05;
+     AHRS = require("ahrs");
+     const thighMahony = new AHRS({
+       sampleInterval: 20,
+       algorithm: "Mahony",
+       beta: 0.0, // only for magdwick
+       kp: kp, // Default: 0.5
+       ki: ki, // Default: 0.0
+       doInitialisation: false,
+     });
+
+     const calfMahony = new AHRS({
+       sampleInterval: 20, algorithm: "Mahony",
+       beta: 0.0,
+       kp: kp, // Default: 0.5
+       ki: ki, // Default: 0.0
+       doInitialisation: false,
+     });
+
+     let snAvg = 0;
+     let snDCEnergy = 0;
+     function filterSound(rawSound) {
+       if (rawSound === undefined || rawSound == null) { return 0; }
+       let alpha = 0.8;
+       let alphaDC = 0.01;
+       snAvg = snAvg * (1 - alpha) + rawSound * alpha;
+       snDCEnergy = snAvg * (1 - alphaDC) + rawSound * alphaDC;
+       return snAvg;
+     }
+
+     let intervalCnt = 0;
+     let lastTime = -10;
+     let magFreq = 1;
+     let thighQuat = [0, 0, 0, 1];
+     let calfQuat = [0, 0, 0, 1];
+     let thighQuat2 = new Quaternion(1, 0, 0, 0);
+     let calfQuat2 = thighQuat2;
+
+     let calfRot = Quaternion.fromEulerLogical(Math.PI, Math.PI / 2, 0, 'XZY');
+
+     return gd => {
+       //{"g0":[0.0018326,-0.0894917,-0.0691805],"t":1461690979011,"m1":[29.6112,-22.9611,108.082],"g1":[0.0355829,-0.0558941,-0.029627],"i":3210,"tx":1461719665540,"a0":[-0.100499,0.00358923,10.0259],"a1":[-9.52343,-1.09472,-1.26461],"sn":4,"m0":[80.0497,-52.4115,7.23472],"tmp":23.0039,"prx":0,"bar":1027.42,"v":"1.0.2","alt":-117.571,"hum":39.5758,"col":[302,168,191,688]};
+       if (!gd) {
+         return undefined;
+       }
+
+       // TODO: get calibration from somewhere else
+       let calibration = {
+         m0: [-264.17, -85.19, 49.39],
+         m1: [-9.42, -11.28, 61.36],
+         g0: [0.025, -0.095, 0.06],
+         g1: [0.05, -0.09, -0.05],
+       };
+
+       let athleteInfo = {
+         weightKg: 70,
+         heightM: 1.6,
+       };
+
+       let dt = gd.t_s - lastTime;
+       if (dt >= 0.002) {
+         if (gd.g0 && gd.a0 && gd.m0) {
+           gd.g0 = vectorSubtract(gd.g0, calibration.g0);
+           gd.m0 = vectorSubtract(gd.g0, calibration.m0);
+
+           if (dt >= 1) {
+             thighMahony.init(...gd.a0, ...gd.m0);
+           } else if (intervalCnt % magFreq === 0) {
+             thighMahony.update(...gd.g0, ...gd.a0, ...gd.m0, dt);
+             dbgconsole("Used mag 1");
+           } else {
+             thighMahony.update(...gd.g0, ...gd.a0, dt);
+           }
+
+           let q = new Quaternion(thighMahony.getQuaternion());
+           thighQuat = [q.x, q.y, q.z, q.w];
+           thighQuat2 = q;
+         }
+
+         if (gd.g1 && gd.a1 && gd.m1) {
+           gd.g1 = vectorSubtract(gd.g1, calibration.g1);
+           gd.m1 = vectorSubtract(gd.g1, calibration.m1);
+
+           if (dt >= 1) {
+             calfMahony.init(...gd.a1, ...gd.m1);
+           } else if (intervalCnt % magFreq === 0) {
+             calfMahony.update(...gd.g1, ...gd.a1, ...gd.m1, dt);
+             dbgconsole("Used mag 2");
+           } else {
+             calfMahony.update(...gd.g1, ...gd.a1, dt);
+           }
+
+           // TODO: account for rotation of board
+           let q = new Quaternion(calfMahony.getQuaternion());
+           q = q.mul(calfRot);
+           calfQuat = [q.x, q.y, q.z, q.w];
+           calfQuat2 = q;
+         }
+         lastTime = gd.t_s;
+       }
+
+       let angleQuat = new Quaternion(thighQuat[3], thighQuat.slice(0, 3))
+         .inverse()
+         .mul(new Quaternion(calfQuat[3], calfQuat.slice(0, 3)));
+
+       let [tilt, rotation, flexion] = angleQuat.toEuler("ZXY");
+       let slerpPct = slerpPctPerSec * dt;
+       slerpPct = Math.max(0, Math.min(1, slerpPct));
+       angleQuat = angleQuat.slerp(Quaternion.fromEulerLogical(0, 0, flexion, "ZXY"))(slerpPct);
+       [tilt, rotation, flexion] = vectorScale(
+         angleQuat.toEuler("ZXY"),
+         180 / Math.PI
+       );
+       flexion = -flexion;
+       intervalCnt += 1;
+       let thighAccel = vectorMag(gd.a0);
+       let calfAccel = vectorMag(gd.a1);
+
+       return {
+         flexion: [flexion],
+         tilt: [tilt],
+         rotation: [rotation],
+         thigh: [thighAccel, thighAccel * athleteInfo.weightKg * 0.07],
+         calf: [calfAccel, calfAccel * athleteInfo.weightKg * 0.049],
+         thighRPY: thighQuat2.toEuler('ZXY').map(x => x * 180 / Math.PI),
+         calfRPY: calfQuat2.toEuler('ZXY').map(x => x * 180 / Math.PI),
+         thighQuat: thighQuat2,
+         calfQuat: calfQuat2,
+         
+         //frameIndex: [getFrameIndex(flexion)],
+         //sound: [filterSound(gd.sn)], // simulated sound energy
+       };
+     };
+   }
+
+   let transformFunction = getV1SleeveDataTransformFunction();
+   
     // show data streaming stats
     if (bw.getURLParam("showstats", "false") == "true") {
       bw.DOM("#infobarcontainer")[0].style.display = "block";
     }
     else {
+      dbgconsole("Test");
       bw.DOM("#infobarcontainer")[0].style.display = "none";
     }
     bw.getURLParam("showstats", "true")
@@ -270,14 +423,14 @@
 
     let a0 = newChartJSLineChart("#a0", 3, "Thigh Accel", maxlen, [-20, 20]);
     let g0 = newChartJSLineChart("#g0", 3, "Thigh Gyro", maxlen, [-500, 500]);
-    let m0 = newChartJSLineChart("#m0", 3, "Thigh Mags", maxlen, [-250, 250]);
+    let m0 = newChartJSLineChart("#m0", 3, "Thigh Mags", maxlen, [-1000, 1000]);
 
     let a1 = newChartJSLineChart("#a1", 3, "Calf Accel", maxlen, [-20, 20]);
     let g1 = newChartJSLineChart("#g1", 3, "Calf Gyro", maxlen, [-500, 500]);
-    let m1 = newChartJSLineChart("#m1", 3, "Calf Mags", maxlen, [-250, 250]);
+    let m1 = newChartJSLineChart("#m1", 3, "Calf Mags", maxlen, [-500, 500]);
 
 
-    let sn = newChartJSLineChart("#sn", 1, "Sound Energy", maxlen, [0, 120]);
+    let sn = newChartJSLineChart("#sn", 1, "Sound Energy", maxlen, [0, 250]);
     let snAvg = 0;
     let snDCEnergy = 0;
 
@@ -285,28 +438,56 @@
 
     let tilt_rot = newChartJSLineChart("#tilt_rot", 2, "Tilt And Rotation", maxlen, [-150, 150]);
 
-   // let o0 = newChartJSLineChart("#o0", 3, "Orientation 0", maxlen, [-200, 200]);
-   // let o1 = newChartJSLineChart("#o1", 3, "Orientation 1", maxlen, [-200, 200]);
-    // state vars
-    let thighQuat = [1, 0, 0, 0];
-    let calfQuat = [1, 0, 0, 0];
-    let thighIntergalFB = [0,0,0];
-    let calfIntergalFB = [0,0,0];
+    //let o0 = newChartJSLineChart("#o0", 3, "Orientation 0", maxlen, [-200, 200]);
+    //let o1 = newChartJSLineChart("#o1", 3, "Orientation 1", maxlen, [-200, 200]);
+    let o0 = newChartJSLineChart("#o0", 3, "Orientation 0", maxlen, [-1, 1]);
+    let o1 = newChartJSLineChart("#o1", 3, "Orientation 1", maxlen, [-1, 1]);
 
-    let thighState = {quat: [1, 0, 0, 0], intFB: [0,0,0]};
-    let calfState  = {quat: [1, 0, 0, 0], intFB: [0,0,0]};
+    // state vars
+    let thighState = { quat: [1, 0, 0, 0], intFB: [0, 0, 0] };
+    let calfState  = { quat: [1, 0, 0, 0], intFB: [0, 0, 0] };
 
     //computed from quaternion
     let thighRPY = [0, 0, 0];
-    let calfRPY = [0, 0, 0];
-  
+    let calfRPY  = [0, 0, 0];
+    /*
+        let mahony0 = new Mahony(20);
+        let mahony1 = new Mahony(20);
+    */
     let ahrs_init = false;
 
     //update renderings
     setInterval(function () {
 
-
       var gd = gDataStable;
+      dbgconsole(gd);
+
+      if ("a0" in gDataStable) {
+          let transformed = transformFunction(gd);
+          dbgconsole(transformed);
+          flexion.updateChart(transformed.flexion, true);
+          tilt_rot.updateChart([...transformed.tilt, ...transformed.rotation], true);
+
+            /*
+            "thighQuat: " + thighQuat.map(x => x.toFixed(2)) + "<br>" +
+            "calfQuat: " + calfQuat.map(x => x.toFixed(2)) + "<br>" +
+            "thighRPY: " + thighRPY.map(x => x.toFixed(2).padStart(7)).join(", ") + "<br>" +
+
+            "calfRPY: " + calfRPY.map(x => x.toFixed(2).padStart(7)).join(", ") + "<br>" +
+               */
+          bw.DOM("#ahrs")[0].innerHTML =
+            "flexion: " + transformed.flexion + "<br>" +
+            "tilt: " + transformed.tilt + "<br>" +
+            "rotn: " + transformed.rotation + "<br>" +
+            "latitude: " + gDataStable.g_lat + "<br>" +
+            "longitude: " + gDataStable.g_lon + "<br>";
+
+          //o0.updateChart(transformed.thighRPY, true);
+          //o1.updateChart(transformed.calfRPY, true);
+          o0.updateChart([transformed.thighQuat.x, transformed.thighQuat.y, transformed.thighQuat.z]);
+          o1.updateChart([transformed.calfQuat.x, transformed.calfQuat.y, transformed.calfQuat.z]);
+
+        }
       if ("a0" in gDataStable)
         a0.updateChart(gDataStable["a0"], true);
 
@@ -334,54 +515,8 @@
         snAvg = snAvg * (1 - alpha) + gDataStable["sn"] * (alpha);
         snDCEnergy = snAvg * (1 - alphaDC) + gDataStable["sn"] * (alphaDC);
         //let snS = bw.mapScale(gDataStable["sn"],0,15000,0,90);
-        //sn.updateChart([5*Math.log2(gDataStable["sn"])], true);
-        sn.updateChart([8 * Math.log2(snAvg)], true);
-      }
-      if ("a0" in gDataStable && "a1" in gDataStable) {
-        let flexAngle = vectorAngle(vectorNorm(gDataStable.a0), vectorNorm(gDataStable.a1), true);
-        gDataStable.flexAngle = flexAngle;
-        //flexion angle
-        renderKneeBonesAngle("#bonesFront", flexAngle, "front", "right")
-        renderKneeBonesAngle("#bonesLateral", flexAngle, "lateral", "right")
-        flexion.updateChart([flexAngle], true);
-        gDataStable.tiltAngle = vectorAngle(vectorNorm(gDataStable.a0), vectorRot(vectorNorm(gDataStable.a1), mrotz), true);
-        gDataStable.rotAngle = vectorAngle(vectorNorm(gDataStable.a0), vectorRot(vectorNorm(gDataStable.a1), mroty), true);
-        tilt_rot.updateChart([gDataStable.tiltAngle, gDataStable.rotAngle], true);
-
-      }
-      if ("a0" in gDataStable) {
-        if (!ahrs_init) {
-
-          ahrs_init = true;
-        }
-        else {
-
-          //mahony0.updateIMU(gDataStable.g0, gDataStable.a0, gDataStable.m0);
-          // mahony1.updateIMU(gDataStable.g1, gDataStable.a1, gDataStable.m1);
-
-          thighQuat =
-            MahonyAHRSupdate(...gDataStable.g0, ...gDataStable.a0, ...gDataStable.m0, thighState.quat, thighState.intFB);
-
-          calfQuat = 
-            MahonyAHRSupdate(...gDataStable.g1, ...gDataStable.a1, ...gDataStable.m1, calfState.quat, calfState.intFB);
-
-
-          thighRPY =vectorScale( Object.values(new Quaternion(...thighQuat).toEuler()),180/Math.PI);
-          calfRPY = vectorScale( Object.values(new Quaternion(...calfQuat).toEuler()), 180/Math.PI);
-
-          bw.DOM("#ahrs")[0].innerHTML =
-            "flexion: " + gDataStable.flexAngle.toFixed(2) + "<br>" +
-            "tilt: " + gDataStable.tiltAngle.toFixed(2) + "<br>" +
-            "rotn: " + gDataStable.rotAngle.toFixed(2) + "<br>" +
-            "thighQuat: " + thighQuat.map(x => x.toFixed(2)) + "<br>" +
-            "calfQuat: " + calfQuat.map(x => x.toFixed(2)) + "<br>"+
-            "thighRPY: " + thighRPY.map(x => x.toFixed(2).padStart(7)).join(", ") + "<br>" +
-            "calfRPY: " + calfRPY.map(x => x.toFixed(2).padStart(7)).join(", ") + "<br>";
-
-         // o0.updateChart(thighRPY, true);
-         // o1.updateChart(calfRPY , true);
-
-        }
+        sn.updateChart([gDataStable["sn"]], true);
+        //sn.updateChart([8 * Math.log2(snAvg)], true);
       }
 
 
