@@ -1,0 +1,96 @@
+syntax = "proto3";
+
+package sleeve;
+
+// Sound format options
+enum SoundFormat {
+  ALAW = 0;
+  RAW = 1;
+}
+
+// Leg segment options
+enum LegSegment {
+  THIGH = 0;
+  CALF = 1;
+}
+
+// Position on segment
+enum SegmentPosition {
+  CENTER = 0;
+  INNER = 1;
+  OUTER = 2;
+}
+
+enum SensorType {
+  IMU = 0;
+  AUDIO = 1;
+}
+
+// Structure for 3D vector data (accelerometer, magnetometer, gyro)
+message Vector3D {
+  float x = 1;
+  float y = 2;
+  float z = 3;
+}
+
+// Structure for quaternion orientation
+message Quaternion {
+  float w = 1;
+  float x = 2;
+  float y = 3;
+  float z = 4;
+}
+
+// Structure describing IMU sensor location
+message SensorLocation {
+  LegSegment segment = 1;
+  SegmentPosition position = 2;
+}
+
+// Structure for a single IMU sensor's data
+message IMUData {
+  Vector3D accelerometer = 1;
+  Vector3D magnetometer = 2;
+  Vector3D gyroscope = 3;
+  Quaternion orientation = 4;
+  uint64 sensor_id = 5;
+}
+
+// Structure for audio data from microphone
+message AudioData {
+  SoundFormat format = 1;
+  bytes samples = 2;      // Raw audio data
+  float average_magnitude = 3;
+  float total_energy = 4;
+  uint64 sensor_id = 5;
+}
+
+// Structure for a complete sensor reading at a single timestamp
+message SensorsReading {
+  uint64 sequence_id = 1;
+  uint64 timestamp_micros = 2;  // Microseconds since boot
+  repeated IMUData imu_readings = 3;
+  AudioData audio_data = 4;
+}
+
+message SensorDescription {
+    SensorType type = 1;
+    SensorLocation location = 2;
+    uint64 id = 3;
+}
+
+// Metadata for the packet
+message PacketMetadata {
+  string device_id = 1;
+  uint64 packet_sequence_id = 2;
+  string firmware_version = 3;
+  uint64 timestamp_micros = 4;  // Packet timestamp in microseconds
+  float  battery_voltage = 5;
+  repeated SensorDescription sensor_descriptions = 6;
+}
+
+// Root structure for a packet of data
+message SleevePacket {
+  PacketMetadata metadata = 1;
+  repeated SensorsReading readings = 2;
+}
