@@ -26,6 +26,8 @@ from sleeve_packet_pb2 import SleevePacket
 DEVICE_NAME_SUBSTRING = "Kinisi"
 UART_RX_UUID = "6e400003-b5a3-f393-e0a9-e50e24dcca9e"
 
+DBG_SERVER_ID = "644d6dee-ea1e-4851-ad8e-8e14b718fe0e"
+
 # Global state
 args = None
 accumulator = ""
@@ -203,7 +205,7 @@ async def run_ble_client():
     global start_time
     start_time = time.time()
 
-    address = await scan_for_device(DEVICE_NAME_SUBSTRING, timeout=10)
+    address = await scan_for_device(DEVICE_NAME_SUBSTRING, timeout=5)
     if not address:
         print("No matching device found. Exiting.")
         return
@@ -245,6 +247,7 @@ def main():
     parser.add_argument("--mode", choices=["raw", "aggregated", "proto"], default="aggregated")
     parser.add_argument("--show-last-packet", action="store_true", help="Show only the last packet")
     parser.add_argument("--upload-url", type=str, default=None)
+    parser.add_argument("--device-id", type=str, default=DBG_SERVER_ID, help="Device ID for protobuf mode")
 
     global args
     args = parser.parse_args()
