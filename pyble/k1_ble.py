@@ -11,7 +11,6 @@ import json
 import time
 import sys
 import base64
-
 import requests  # pip install requests
 from bleak import BleakScanner, BleakClient
 from rich.live import Live
@@ -33,15 +32,15 @@ accumulator = ""
 logfile_handle = None
 gLastPacket = ""
 gLiveView = None
+packet_count = 0
+total_bytes = 0
+start_time = None
 
 # --------------------------------------------------------------------
 # Utilities
 # --------------------------------------------------------------------
 def round_floats(obj, decimals):
-    """
-    Recursively round all float values in a nested dict/list to 'decimals' digits.
-    Used only in aggregator/proto modes (where we parse JSON).
-    """
+    """Recursively round all float values in a nested dict/list to 'decimals' digits."""
     if isinstance(obj, float):
         return round(obj, decimals)
     elif isinstance(obj, list):
@@ -94,10 +93,11 @@ def upload_packet(content: bytes, is_proto: bool):
         show_on_console(f"[UPLOAD ERROR] {ex}")
 
 # --------------------------------------------------------------------
-# Packet Handlers (Refactored to Use sleeve_transform)
+# Packet Handlers
 # --------------------------------------------------------------------
 def handle_raw_packet(packet_str: str):
     """Process raw packets and log/upload them."""
+    global packet_count, total_bytes
     now_ts = time.time()
     entry = {"timestamp": now_ts, "raw_string": packet_str}
     text_out = json.dumps(entry, ensure_ascii=False)
@@ -106,9 +106,13 @@ def handle_raw_packet(packet_str: str):
     write_to_logfile(text_out)
     upload_packet(content=text_out.encode("utf-8"), is_proto=False)
 
+    packet_count += 1
+    total_bytes += len(packet_str)
+
 
 def handle_aggregated_packet(record_str: str):
     """Process aggregated JSON records and log/upload them."""
+    global packet_count, total_bytes
     now_ts = time.time()
     try:
         parsed = json.loads(record_str)
@@ -123,9 +127,13 @@ def handle_aggregated_packet(record_str: str):
     write_to_logfile(text_out)
     upload_packet(content=text_out.encode("utf-8"), is_proto=False)
 
+    packet_count += 1
+    total_bytes += len(record_str)
+
 
 def handle_proto_packet(record_str: str):
     """Process packets in protobuf mode."""
+    global packet_count, total_bytes
     now_ts = time.time()
     try:
         parsed = json.loads(record_str)
@@ -151,6 +159,9 @@ def handle_proto_packet(record_str: str):
     show_on_console(text_out)
     write_to_logfile(text_out)
     upload_packet(content=proto_bytes, is_proto=True)
+
+    packet_count += 1
+    total_bytes += len(proto_bytes)
 
 # --------------------------------------------------------------------
 # BLE Notification Callback
@@ -189,19 +200,16 @@ async def scan_for_device(name_substring: str, timeout: int = 5):
 
 async def run_ble_client():
     """Main BLE loop."""
+    global start_time
+    start_time = time.time()
+
     address = await scan_for_device(DEVICE_NAME_SUBSTRING, timeout=10)
     if not address:
         print("No matching device found. Exiting.")
         return
 
     global logfile_handle
-    if not args.logfile:
-        short_id = "".join(c for c in address if c.isalnum())[-6:]
-        default_fname = f"{short_id}.jsonl"
-        print(f"No logfile specified, using: {default_fname}")
-        logfile_handle = open(default_fname, "a", encoding="utf-8")
-    else:
-        logfile_handle = open(args.logfile, "a", encoding="utf-8")
+    logfile_handle = open(args.logfile, "a", encoding="utf-8") if args.logfile else None
 
     print(f"Attempting to connect to {address}...")
     async with BleakClient(address) as client:
@@ -219,15 +227,12 @@ async def run_ble_client():
 
         print("Press Ctrl+C to stop.")
 
-        if args.show_last_packet:
-            with Live(auto_refresh=False, transient=False) as live:
-                while True:
+        with Live(auto_refresh=False, transient=False) as live:
+            while True:
+                if args.show_last_packet:
                     live.update(Text(gLastPacket))
                     live.refresh()
-                    await asyncio.sleep(0.5)
-        else:
-            while True:
-                await asyncio.sleep(1.0)
+                await asyncio.sleep(0.5)
 
 # --------------------------------------------------------------------
 # Entry Point
@@ -238,9 +243,8 @@ def main():
     parser.add_argument("--prec", type=int, default=6, help="Float precision")
     parser.add_argument("--logfile", type=str, default=None, help="Log file")
     parser.add_argument("--mode", choices=["raw", "aggregated", "proto"], default="aggregated")
-    parser.add_argument("--show-last-packet", action="store_true")
+    parser.add_argument("--show-last-packet", action="store_true", help="Show only the last packet")
     parser.add_argument("--upload-url", type=str, default=None)
-    parser.add_argument("--device-id", type=str, default="K1_DEVICE")
 
     global args
     args = parser.parse_args()
@@ -248,10 +252,8 @@ def main():
     try:
         asyncio.run(run_ble_client())
     except KeyboardInterrupt:
-        print("\nUser interrupted, closing...")
-    finally:
-        if logfile_handle:
-            logfile_handle.close()
+        elapsed = time.time() - start_time
+        print(f"\nPackets: {packet_count}, Time: {elapsed:.2f}s, Packets/s: {packet_count/elapsed:.2f}\nTotal Bytes: {total_bytes}, Bytes/Packet: {total_bytes/packet_count:.2f}, Bytes/s: {total_bytes/elapsed:.2f}")
         print("Done.")
 
 if __name__ == "__main__":
