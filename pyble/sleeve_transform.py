@@ -1,3 +1,7 @@
+# sleeve_transform.py 
+# contains functions to convert between the original JSON-like dictionary
+# format and the SleevePacket protobuf format. The protobuf format is defined in sleeve_packet_pb2.py.
+
 import time
 from sleeve_packet_pb2 import (
     SleevePacket, PacketMetadata, SensorsReading, IMUData, Vector3D,

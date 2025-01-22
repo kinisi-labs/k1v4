@@ -1,4 +1,4 @@
-# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+# .gitignore for k1v4 (js + python)
 
 # dependencies
 /node_modules
@@ -6,6 +6,7 @@
 .pnp.js
 /data
 /data/*
+
 # testing
 /coverage
 
@@ -22,3 +23,41 @@
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+
+# Python-related ignores
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Virtual environment
+.venv/
+venv/
+env/
+ENV/
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# pip cache
+pip-log.txt
+pip-delete-this-directory.txt
+
+# pyenv
+.python-version
+
+# pytest cache
+.cache/
+
+# mypy
+.mypy_cache/
+
+# logs
+*.log
