@@ -1,6 +1,8 @@
-# K1 BLE Logger
+# K1 BLE Bridge
 
 A Python-based command-line utility that connects to a “Kinisi K1” (or similar) BLE device, parses sensor data, and saves or uploads the results in various formats including to X4 protobuf.
+
+Also includes a test_server.py which can be run locally to test receiving packets and sendprotoemu.py which includes a simple emulator to test sending packets as well.
 
 ---
 
@@ -154,4 +156,4 @@ options:
 
 - **BLE Connection**: Provided by the [Bleak](https://pypi.org/project/bleak/) library.  
 - **URL Upload**: Done via [Requests](https://pypi.org/project/requests/).  
-- **Protobuf**: Requires the `.proto` definitions and the generated Python file `sleeve_pb2.py`.  
+- **Protobuf**: Requires the `.proto` definitions and the generated Python file `sleeve_packet_pb2.py`.  
