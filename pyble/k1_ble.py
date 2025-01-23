@@ -244,9 +244,9 @@ def main():
     parser = argparse.ArgumentParser(description="K1 BLE Data Logger")
     parser.add_argument("--prec", type=int, default=6, help="Float precision")
     parser.add_argument("--logfile", type=str, default=None, help="Log file")
-    parser.add_argument("--mode", choices=["raw", "aggregated", "proto"], default="aggregated")
-    parser.add_argument("--show-last-packet", action="store_true", help="Show only the last packet")
-    parser.add_argument("--upload-url", type=str, default=None)
+    parser.add_argument("--mode", choices=["raw", "aggregated", "proto"], default="aggregated", help="combine v1 packets in to full json / protobuf records")
+    parser.add_argument("--show-last-packet", action="store_true", help="Show only the last packet at console")
+    parser.add_argument("--upload-url", type=str, default=None, help="HTTP upload URL e.g. http://localhost:8008/api/v1/upload")
     parser.add_argument("--device-id", type=str, default=DBG_SERVER_ID, help="Device ID for protobuf mode")
 
     global args
