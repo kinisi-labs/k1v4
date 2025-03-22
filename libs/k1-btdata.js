@@ -13,6 +13,7 @@ UART.debug = 1;
 
 // load sim data from file
 var sim = bw.getURLParam("sim", "false");
+
 var simData; // data loaded from file / API
 var simDataTick = 0; // packet Tick Incrementer
 
@@ -31,45 +32,97 @@ var doBLEConnect = function () {
 var doBLEdisconnect = function () {
     if (gBLE.connected == true) {
         gBLE.close();
-        gBLE = {connected:false};
+        gBLE = { connected: false };
     }
 }
+var runSim = function (simData) {
+    console.log("running sim...");
+    gDataStorage.sessionHeight = simData.sessionHeight;
+    gDataStorage.sessionWeight = simData.sessionWeight;
+    gDataStorage.sessionName = simData.sessionName;
+    bw.DOM("#sessionName")[0].value = simData.sessionName;
+    bw.DOM("#sessionHeight")[0].value = simData.sessionHeight;
+    bw.DOM("#sessionWeight")[0].value = simData.sessionWeight;
+    gBLE.connected = true;
+    gBLE.buf = "";
+    gBLE.jsonRec = { "recTime": (new Date()).getTime() };
+    setInterval(function () {
+        gBLE.jsonRec.data = simData.data[simDataTick];
+        gDataStorage.packetInfo.numPackets = (gDataStorage.packetInfo.numPackets || 0) + 1;
+        gDataStorage.packetInfo.numBytes = (gDataStorage.packetInfo.numBytes || 0) + JSON.stringify(gBLE.jsonRec.data).length;
+        gDataStorage.startTime = (gDataStorage.startTime || (new Date()).getTime());
+        gDataStorage.curTime = (new Date()).getTime();
+        gDataStorage.packetInfo.elapsedTime = (gDataStorage.curTime - gDataStorage.startTime) / 1000;
+        gDataStorage.packetInfo.avgPacketSize = gDataStorage.packetInfo.numBytes / gDataStorage.packetInfo.numPackets;
+        gDataStorage.packetInfo.avgPacketsPerSec = gDataStorage.packetInfo.numPackets / (gDataStorage.packetInfo.elapsedTime);
+        gDataStorage.packetInfo.avgBytesPerSec = gDataStorage.packetInfo.numBytes / (gDataStorage.packetInfo.elapsedTime);
 
+        updateData(simData.data[simDataTick]);
+        simDataTick = (simDataTick + 1) % simData.data.length;
+    }, 50);
+}
 if (sim != "false") {
     if (sim == "load") {
         bw.getJSONFile("k1x-sensor-data3.json", function (d) {
-            simData = JSON.parse(d);
-            gDataStorage.sessionHeight = simData.sessionHeight;
-            gDataStorage.sessionWeight = simData.sessionWeight;
-            gDataStorage.sessionName = simData.sessionName;
-            bw.DOM("#sessionName")[0].value = simData.sessionName;
-            bw.DOM("#sessionHeight")[0].value = simData.sessionHeight;
-            bw.DOM("#sessionWeight")[0].value = simData.sessionWeight;
-            gBLE.connected = true;
-            gBLE.buf = "";
-            gBLE.jsonRec = { "recTime": (new Date()).getTime() };
-            setInterval(function () {
-                gBLE.jsonRec.data = simData.data[simDataTick];
-                gDataStorage.packetInfo.numPackets = (gDataStorage.packetInfo.numPackets || 0) + 1;
-                gDataStorage.packetInfo.numBytes = (gDataStorage.packetInfo.numBytes || 0) + JSON.stringify(gBLE.jsonRec.data).length;
-                gDataStorage.startTime = (gDataStorage.startTime || (new Date()).getTime());
-                gDataStorage.curTime = (new Date()).getTime();
-                gDataStorage.packetInfo.elapsedTime = (gDataStorage.curTime - gDataStorage.startTime) / 1000;
-                gDataStorage.packetInfo.avgPacketSize = gDataStorage.packetInfo.numBytes / gDataStorage.packetInfo.numPackets;
-                gDataStorage.packetInfo.avgPacketsPerSec = gDataStorage.packetInfo.numPackets / (gDataStorage.packetInfo.elapsedTime);
-                gDataStorage.packetInfo.avgBytesPerSec = gDataStorage.packetInfo.numBytes / (gDataStorage.packetInfo.elapsedTime);
-
-                updateData(simData.data[simDataTick]);
-                simDataTick = (simDataTick + 1) % simData.data.length;
-            }, 50);
-
+            runSim(JSON.parse(d));
         });
+    }
+    else if (sim == "file") {
+        promptToLoadJsonFile(function (data) {
+            console.log('Loaded saved session from file');
+            gDataTemp = JSON.parse(data);
+            runSim(gDataTemp);
+        }
+        );
     }
     else {
         doBLEConnect();
     }
 } else {
     doBLEConnect();
+}
+function promptToLoadJsonFile(callback) {
+    // Create overlay
+    const overlay = document.createElement('div');
+    overlay.style.position = 'fixed';
+    overlay.style.top = 0;
+    overlay.style.left = 0;
+    overlay.style.width = '100vw';
+    overlay.style.height = '100vh';
+    overlay.style.backgroundColor = 'rgba(0, 0, 0, 0.5)';
+    overlay.style.display = 'flex';
+    overlay.style.alignItems = 'center';
+    overlay.style.justifyContent = 'center';
+    overlay.style.zIndex = 9999;
+
+    // Create dialog box
+    const dialog = document.createElement('div');
+    dialog.style.background = 'white';
+    dialog.style.padding = '20px';
+    dialog.style.borderRadius = '10px';
+    dialog.style.boxShadow = '0 2px 10px rgba(0, 0, 0, 0.3)';
+    dialog.innerHTML = `<p style="margin-bottom: 20px;">Load data from file?</p>`;
+
+    // Create buttons
+    const yesButton = document.createElement('button');
+    yesButton.textContent = 'Yes';
+    yesButton.style.marginRight = '10px';
+    yesButton.classList.add('btn', 'btn-primary');
+    yesButton.onclick = () => {
+        document.body.removeChild(overlay);
+        loadJsonFile(callback);
+    };
+
+    const cancelButton = document.createElement('button');
+    cancelButton.textContent = 'Cancel';
+    cancelButton.onclick = () => {
+        document.body.removeChild(overlay);
+    };
+
+    dialog.appendChild(yesButton);
+    dialog.appendChild(cancelButton);
+    overlay.appendChild(dialog);
+    document.body.appendChild(overlay);
 }
 
 var updateData = function (data) {
@@ -149,7 +202,7 @@ var asmPacket = function (s, accum) {
         i = accum.indexOf("<?");
 
         if (i >= 0) {
-            accum = accum.substr(2, i-2);
+            accum = accum.substr(2, i - 2);
         }
     }
 
@@ -164,13 +217,13 @@ function btnResetDataStorage() {
     gDataStorage.pageStartTime = (new Date()).getTime()
     gDataStorage.data = [];
 
-    gDataStorage.sessionName   = bw.DOM("#sessionName")[0].value = "";
+    gDataStorage.sessionName = bw.DOM("#sessionName")[0].value = "";
     gDataStorage.sessionHeight = bw.DOM("#sessionHeight")[0].value = "";
     gDataStorage.sessionWeight = bw.DOM("#sessionWeight")[0].value = "";
 }
 function btnSaveData() {
     // creates a time-stamped file to store on client computer
-    gDataStorage.sessionName   = bw.DOM("#sessionName")[0].value;
+    gDataStorage.sessionName = bw.DOM("#sessionName")[0].value;
     gDataStorage.sessionHeight = bw.DOM("#sessionHeight")[0].value;
     gDataStorage.sessionWeight = bw.DOM("#sessionWeight")[0].value;
     let exportData = JSON.stringify(gDataStorage, function (key, value) {
@@ -184,35 +237,39 @@ function btnSaveData() {
 }
 
 function btnLoadData() {
-    // loads a file from client computer
-    var input = document.createElement('input');
+    //location.href = location.origin + location.pathname + '?sim=file';
+    loadData();
+}
+function loadJsonFile(callback) {
+    const input = document.createElement('input');
     input.type = 'file';
+    input.accept = '.json,application/json';
 
-    input.onchange = e => {
-        // getting a hold of the file reference
-        var file = e.target.files[0];
+    input.onchange = async (event) => {
+        const file = event.target.files[0];
+        if (!file) return;
 
-        // setting up the reader
-        var reader = new FileReader();
-        reader.readAsText(file, 'UTF-8');
-
-        // here we tell the reader what to do when it's done reading...
-        reader.onload = readerEvent => {
-            var content = readerEvent.target.result; 
-            //dbgconsole(content);
-            // do the stuff in simData load section
-            gDataStorage = JSON.parse(content);
-            dbgconsole(gDataStorage);
-            dbgconsole("... HERE ...")
-            gDataStorage.packetInfo= { numBytes:0, numPackets:0};
-            gDataStorage.pageStartTime = (new Date()).getTime();
-
+        try {
+            const text = await file.text();
+            const json = JSON.parse(text);
+            callback(json);
+        } catch (err) {
+            console.error('Failed to load or parse JSON:', err);
+            alert('Error: The selected file is not valid JSON.');
         }
-
-    }
+    };
 
     input.click();
+}
 
+function loadData() {
+    //disconnect ble if connected
+    //doBLEdisconnect();
+    loadJsonFile(function (data) {
+        console.log('Loaded saved session from file');
+        gDataTemp = JSON.parse(data);
+        runSim(gDataTemp);
+    });
 };
 
 function btnConnect() {
