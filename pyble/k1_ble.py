@@ -1,3 +1,8 @@
+# /// script
+# requires-python = ">=3.11"
+# dependencies = []
+# ///
+
 #!/usr/bin/env python3
 """
 k1_ble.py 
@@ -261,3 +266,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+

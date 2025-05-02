@@ -1,0 +1,14 @@
+[project]
+name = "pyble"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.9"
+dependencies = [
+    "bleak>=0.22.3",
+    "google>=3.0.0",
+    "requests>=2.32.3",
+    "rich>=14.0.0",
+    "sync>=1.0.0",
+    "uv>=0.7.2",
+]
